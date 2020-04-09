@@ -1,4 +1,5 @@
-// study for list
+// Study for list
+// Two implementation, slice and array
 package link_list
 
 import (
@@ -17,6 +18,9 @@ type List interface {
 	set(int, interface{})
 }
 
+//Implement linklist with slice
+//Unsafe, because of i can't controll slice in memmory
+//Just for fun
 type SliceLinkList struct {
 	values []interface{}
 	length int
