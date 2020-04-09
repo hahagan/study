@@ -18,6 +18,7 @@ func TestLinkList(t *testing.T) {
 	testDelete(t, l, 4)
 	testClear(t, l)
 	testInsert(t, l, 0, 0)
+	testInsert(t, l, -3, 0)
 	testDelete(t, l, 0)
 	testDestroy(t, l)
 }
@@ -58,18 +59,14 @@ func testGet(t *testing.T, l *SliceLinkList, index int) {
 	}
 }
 
-func testSet(t *testing.T, l *SliceLinkList, index int, i int) {
-	l.Set(index, i)
-	if i != l.Get(index) {
-		t.Errorf("TestSet error, set: %d, get:　%d\n", i, l.Get(index))
-	}
-}
-
 func testInsert(t *testing.T, l *SliceLinkList, index int, i int) {
 	length := l.Length()
 	l.Insert(index, i)
 	if index > l.length-1 {
 		index = l.length - 2
+	}
+	if index < 0 {
+		index = 0
 	}
 	if i != l.Get(index) || l.Length() != length+1 {
 		t.Errorf("Testinsert error, insert: %d, get %d:　%d\n", i, index, l.Get(index))
@@ -81,4 +78,11 @@ func testInsert(t *testing.T, l *SliceLinkList, index int, i int) {
 
 func testDelete(t *testing.T, l *SliceLinkList, index int) {
 	l.Delete(index)
+}
+
+func testSet(t *testing.T, l *SliceLinkList, index int, i int) {
+	l.Set(index, i)
+	if i != l.Get(index) {
+		t.Errorf("TestSet error, set: %d, get:　%d\n", i, l.Get(index))
+	}
 }
