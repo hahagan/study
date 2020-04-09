@@ -13,7 +13,7 @@ type ArrayLinkList struct {
 }
 
 func (l *ArrayLinkList) Init(base int, list ...interface{}) interface{} {
-	fmt.Println(" ")
+	// fmt.Println(" ")
 	length := len(list)
 	var capacity int
 	if length > base {

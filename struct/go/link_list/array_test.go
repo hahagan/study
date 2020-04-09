@@ -23,7 +23,17 @@ func TestArrayList(t *testing.T) {
 	testArrayDelete(t, l, 0)
 	testArrayDestroy(t, l)
 	testArrayInit(t, l, 10, 0, 1, 2, 3)
+	testArray_expand(t, l)
 
+}
+
+func testArray_expand(t *testing.T, l *ArrayLinkList) {
+	want := l.capacity + l.capacityBase
+	l.expand(want)
+	tmp := *l.values
+	if l.capacity != cap(tmp) || l.capacity != want {
+		t.Errorf("Test Array expand error, want: %d, get, %d", want, l.capacity)
+	}
 }
 
 func testArrayInit(t *testing.T, l *ArrayLinkList, base int, args ...int) {

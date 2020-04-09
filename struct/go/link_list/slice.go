@@ -4,7 +4,7 @@ package link_list
 
 import (
 	"fmt"
-	"reflect"
+	// "reflect"
 )
 
 type List interface {
@@ -30,10 +30,9 @@ func (l *SliceLinkList) Init(list ...interface{}) interface{} {
 	l.values = []interface{}{}
 	for i := range list {
 		l.values = append(l.values, i)
-		fmt.Println("item: ", reflect.ValueOf(i))
+		// fmt.Println("item: ", reflect.ValueOf(i))
 	}
 	l.length = len(l.values)
-	fmt.Printf("lenght: %d\n", l.length)
 	return l
 }
 
