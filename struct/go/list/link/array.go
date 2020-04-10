@@ -12,7 +12,7 @@ type ArrayLinkList struct {
 	capacityBase int
 }
 
-func (l *ArrayLinkList) Init(base int, list ...interface{}) interface{} {
+func (l *ArrayLinkList) Init(base int, list ...interface{}) *ArrayLinkList {
 	// fmt.Println(" ")
 	length := len(list)
 	var capacity int

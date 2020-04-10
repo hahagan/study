@@ -47,7 +47,7 @@ func (l *PointerList) Length() int {
 
 func (l *PointerList) Get(index int) interface{} {
 	if index > l.length-1 {
-		panic(fmt.Sprintf("Get LinkList overload with index %d\n", index))
+		panic(fmt.Sprintf("Get PointerList overload with index %d\n", index))
 	}
 
 	cur := l.next
@@ -56,7 +56,7 @@ func (l *PointerList) Get(index int) interface{} {
 	}
 
 	if cur == nil {
-		panic(fmt.Sprintf("Get LinkList overload with index %d\n", index))
+		panic(fmt.Sprintf("Get PointerList overload with index %d\n", index))
 	}
 
 	return cur.value
@@ -94,7 +94,7 @@ func (l *PointerList) Insert(index int, i interface{}) {
 
 func (l *PointerList) Delete(index int) {
 	if index > l.length-1 || index < 0 {
-		panic(fmt.Sprintf("Delete LinkList overload with index %d, only within %d\n", index, l.length))
+		panic(fmt.Sprintf("Delete PointerList overload with index %d, only within %d\n", index, l.length))
 	}
 	cur := l
 	for i := 0; i < index && cur != nil; i++ {
@@ -113,7 +113,7 @@ func (l *PointerList) Delete(index int) {
 
 func (l *PointerList) Set(index int, i interface{}) {
 	if index > l.length-1 {
-		panic(fmt.Sprintf("Get LinkList overload with index %d\n", index))
+		panic(fmt.Sprintf("Get PointerList overload with index %d\n", index))
 	}
 
 	cur := l.next
@@ -122,7 +122,7 @@ func (l *PointerList) Set(index int, i interface{}) {
 	}
 
 	if cur == nil {
-		panic(fmt.Sprintf("Get LinkList overload with index %d\n", index))
+		panic(fmt.Sprintf("Get PointerList overload with index %d\n", index))
 	}
 
 	cur.value = i
