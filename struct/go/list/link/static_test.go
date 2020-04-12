@@ -66,7 +66,7 @@ func testStaticListInsert(t *testing.T, l *StaticList, index int, i int) {
 	length := l.Length()
 	l.Insert(index, i)
 	if index > l.length-1 {
-		index = l.length - 2
+		index = l.length - 1
 	}
 	if index < 0 {
 		index = 0

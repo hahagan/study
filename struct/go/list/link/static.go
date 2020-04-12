@@ -126,7 +126,7 @@ func (l *StaticList) mallocFree() (int, StaticListItem) {
 // 获取链表指定位置元素前驱，并将数据插入链表第index位置， 时间复杂度O(n)
 func (l *StaticList) Insert(index int, i interface{}) {
 	if index > l.length-1 {
-		index = l.length - 1
+		index = l.length
 	} else if index <= 0 {
 		index = 0
 	}

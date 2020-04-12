@@ -23,6 +23,9 @@ func TestArrayList(t *testing.T) {
 	testArrayDelete(t, l, 0)
 	testArrayDestroy(t, l)
 	testArrayInit(t, l, 10, 0, 1, 2, 3)
+	for i := 0; i < 12; i++ {
+		testArrayInsert(t, l, i, i)
+	}
 	testArray_expand(t, l)
 
 }
@@ -86,7 +89,7 @@ func testArrayInsert(t *testing.T, l *ArrayLinkList, index int, i int) {
 	length := l.Length()
 	l.Insert(index, i)
 	if index > l.length-1 {
-		index = l.length - 2
+		index = l.length - 1
 	}
 	if index < 0 {
 		index = 0

@@ -23,6 +23,7 @@ func (l *ArrayLinkList) Init(base int, list ...interface{}) *ArrayLinkList {
 	}
 
 	l.capacity = capacity
+	l.capacityBase = base
 	l.length = length
 	values := make([]interface{}, capacity)
 
@@ -53,8 +54,8 @@ func (l *ArrayLinkList) Length() int {
 }
 
 func (l *ArrayLinkList) Get(index int) interface{} {
-	if index > l.length-1 || l.values == nil {
-		panic(fmt.Sprintf("Get ArrayList overload with index %d\n", index))
+	if index > l.length-1 || l.values == nil || index < 0 {
+		panic(fmt.Sprintf("Get ArrayList overload with index %d, length: %d\n", index, l.length))
 	}
 	tmp := *l.values
 	return tmp[index]
@@ -70,12 +71,12 @@ func (l *ArrayLinkList) expand(capacity int) {
 }
 
 func (l *ArrayLinkList) Insert(index int, i interface{}) int {
-	if l.length+1 == l.capacity {
+	if l.length == l.capacity {
 		l.expand(l.capacity + l.capacityBase)
 	}
 
 	if index > l.length-1 {
-		index = l.length - 1
+		index = l.length
 	} else if index <= 0 {
 		index = 0
 	}
@@ -85,7 +86,7 @@ func (l *ArrayLinkList) Insert(index int, i interface{}) int {
 	}
 
 	tmp := *l.values
-	for j := l.length - 1; j >= index; j-- {
+	for j := l.length - 1; j > index; j-- {
 		tmp[j+1] = tmp[j]
 	}
 
@@ -113,4 +114,8 @@ func (l *ArrayLinkList) Set(index int, i interface{}) {
 	}
 	tmp := *l.values
 	tmp[index] = i
+}
+
+func (l *ArrayLinkList) Capacity() int {
+	return l.capacity
 }

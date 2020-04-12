@@ -45,7 +45,7 @@ func (l *PointerList) Length() int {
 	return l.length
 }
 
-func (l *PointerList) Get(index int) interface{} {
+func (l *PointerList) get(index int) *PointerList {
 	if index > l.length-1 {
 		panic(fmt.Sprintf("Get PointerList overload with index %d\n", index))
 	}
@@ -54,6 +54,12 @@ func (l *PointerList) Get(index int) interface{} {
 	for i := 0; i < index && cur != nil; i++ {
 		cur = cur.next
 	}
+
+	return cur
+}
+
+func (l *PointerList) Get(index int) interface{} {
+	cur := l.get(index)
 
 	if cur == nil {
 		panic(fmt.Sprintf("Get PointerList overload with index %d\n", index))
