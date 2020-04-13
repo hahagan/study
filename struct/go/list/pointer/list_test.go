@@ -6,7 +6,7 @@ import (
 	"testing"
 )
 
-func TestArrayList(t *testing.T) {
+func TestPointerList(t *testing.T) {
 	fmt.Println("test ArrayList: ")
 	l := new(PointerList)
 	testPointerListInit(t, l)
