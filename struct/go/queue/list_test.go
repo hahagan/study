@@ -1,10 +1,12 @@
 package queue
 
 import (
+	"fmt"
 	"testing"
 )
 
 func TestListQueue(t *testing.T) {
+	fmt.Println("")
 	s := new(ListQueue)
 	s.Init()
 	for i := 0; i < 20; i++ {
@@ -20,6 +22,57 @@ func TestListQueue(t *testing.T) {
 	if item, err := s.Pop(); item != nil || err == nil {
 		t.Errorf("Test ListQueue Pop() error, item: %d", item)
 	}
+	testListQueueClear(t, s)
+	testListQueueDestroy(t, s)
+}
+
+func TestLisQueueEndFunction(t *testing.T) {
+	s := new(ListQueue)
+	s.Init()
+	for i := 0; i < 20; i++ {
+		testListQueuePushHead(t, s, i)
+	}
+	testListQueueGetEnd(t, s, 0)
+
+	for i := 0; i < 20; i++ {
+		testListQueuePopEnd(t, s, i)
+
+	}
+
+	if item, err := s.PopEnd(); item != nil || err == nil {
+		t.Errorf("Test ListQueue Pop() error, item: %d", item)
+	}
+
+	testListQueueClear(t, s)
+	testListQueueDestroy(t, s)
+}
+
+func TestLisQueueMix(t *testing.T) {
+	s := new(ListQueue)
+	s.Init()
+
+	// 2
+	testListQueuePush(t, s, 2)
+	// 1,2
+	testListQueuePushHead(t, s, 1)
+	// 0,1,2
+	testListQueuePushHead(t, s, 0)
+	// 0,1,2,3
+	testListQueuePush(t, s, 3)
+
+	// 1,2,3
+	testListQueuePop(t, s, 0)
+	// 1,2
+	testListQueuePopEnd(t, s, 3)
+	// 1
+	testListQueuePopEnd(t, s, 2)
+	// nil
+	testListQueuePopEnd(t, s, 1)
+
+	if item, err := s.PopEnd(); item != nil || err == nil {
+		t.Errorf("Test ListQueue Pop() error, item: %d", item)
+	}
+
 	testListQueueClear(t, s)
 	testListQueueDestroy(t, s)
 }
@@ -60,14 +113,31 @@ func testListQueuePop(t *testing.T, s *ListQueue, want interface{}) {
 }
 
 func testListQueuePush(t *testing.T, s *ListQueue, i interface{}) {
-	// lengthOld := s.Length()
 	s.Push(i)
-	// want := s.GetHead()
-	// lengthNew := s.Length()
-	// // if i != want {
-	// // 	t.Errorf("Test ListQueue Push() error, want: %d, get: %d", i, want)
-	// // }
-	// if lengthNew != lengthOld+1 {
-	// 	t.Errorf("Test ListQueue Push() error, after push %d, length: %d, before push length: %d", i, lengthNew, lengthOld)
-	// }
+}
+
+func testListQueueGetEnd(t *testing.T, s *ListQueue, want int) {
+	i := s.GetEnd()
+	if i != want {
+		t.Errorf("Test ListQueue GetEnd() error, want: %d, get: %d", want, i)
+
+	}
+}
+
+func testListQueuePopEnd(t *testing.T, s *ListQueue, want interface{}) {
+
+	i, _ := s.PopEnd()
+	if i != want {
+		t.Errorf("Test ListQueue PopEnd() error, want: %d, get: %d", want, i)
+		t.Error(s.head, s.head.Length())
+		for cur := s.head; cur.Next != nil; cur = cur.Next {
+			t.Error("|------item: ", cur.Next, cur.Prev, s.end)
+
+		}
+	}
+
+}
+
+func testListQueuePushHead(t *testing.T, s *ListQueue, i interface{}) {
+	s.PushHead(i)
 }

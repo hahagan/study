@@ -98,7 +98,15 @@ func testDoubleListInsert(t *testing.T, l *DoubleList, index int, i int) {
 }
 
 func testDoubleListDelete(t *testing.T, l *DoubleList, index int) {
+	oldLength := l.length
+	newLength := 0
 	l.Delete(index)
+	for cur := l; cur.Next != nil; cur = cur.Next {
+		newLength++
+	}
+	if newLength != oldLength-1 {
+		t.Error("Test DoubleList Delete error")
+	}
 }
 
 func testDoubleListSet(t *testing.T, l *DoubleList, index int, i int) {

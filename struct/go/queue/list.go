@@ -54,6 +54,29 @@ func (s *ListQueue) Length() int {
 
 // 插入队尾
 func (s *ListQueue) Push(i interface{}) {
-	s.end.Insert(1, i)
+	s.end.Insert(0, i)
 	s.end = s.end.Next
+}
+
+// 获取队尾
+func (s *ListQueue) GetEnd() interface{} {
+	return s.end.Prev.Get(0)
+}
+
+func (s *ListQueue) PopEnd() (interface{}, error) {
+	if s.end.Prev == nil {
+		return nil, fmt.Errorf("out of queue")
+	}
+	s.end = s.end.Prev
+	r := s.end.Get(0)
+	s.end.Delete(0)
+	return r, nil
+
+}
+
+func (s *ListQueue) PushHead(i interface{}) {
+	s.head.Insert(0, i)
+	if s.Length() == 1 {
+		s.end = s.head.Next
+	}
 }
