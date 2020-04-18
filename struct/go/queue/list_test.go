@@ -9,12 +9,13 @@ func TestListQueue(t *testing.T) {
 	fmt.Println("")
 	s := new(ListQueue)
 	s.Init()
-	for i := 0; i < 20; i++ {
+	times := 100
+	for i := 0; i < times; i++ {
 		testListQueuePush(t, s, i)
 	}
 	testListQueueGetTop(t, s, 0)
 
-	for i := 0; i < 20; i++ {
+	for i := 0; i < times; i++ {
 		testListQueuePop(t, s, i)
 
 	}
@@ -22,6 +23,12 @@ func TestListQueue(t *testing.T) {
 	if item, err := s.Pop(); item != nil || err == nil {
 		t.Errorf("Test ListQueue Pop() error, item: %d", item)
 	}
+
+	testListQueuePush(t, s, 0)
+	testListQueuePop(t, s, 0)
+	testListQueuePush(t, s, 1)
+	testListQueuePop(t, s, 1)
+
 	testListQueueClear(t, s)
 	testListQueueDestroy(t, s)
 }
@@ -42,6 +49,11 @@ func TestLisQueueEndFunction(t *testing.T) {
 	if item, err := s.PopEnd(); item != nil || err == nil {
 		t.Errorf("Test ListQueue Pop() error, item: %d", item)
 	}
+
+	testListQueuePushHead(t, s, 0)
+	testListQueuePopEnd(t, s, 0)
+	testListQueuePushHead(t, s, 1)
+	testListQueuePopEnd(t, s, 1)
 
 	testListQueueClear(t, s)
 	testListQueueDestroy(t, s)

@@ -48,7 +48,7 @@ func (l *DoubleList) Get(index int) interface{} {
 		i++
 	}
 	if i-1 != index {
-		panic(fmt.Errorf("Out of range, index: %d, filnal: %d, %d", index, i-1, cur.value))
+		panic(fmt.Errorf("Out of range, index: %d, filnal: %d, %+v", index, i-1, cur))
 	}
 	return cur.value
 }

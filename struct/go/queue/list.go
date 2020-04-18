@@ -45,6 +45,9 @@ func (s *ListQueue) Pop() (interface{}, error) {
 
 	r := s.GetHead()
 	s.DoubleList.Delete(0)
+	if s.Length() == 0 {
+		s.end = s.head
+	}
 	return r, nil
 }
 
