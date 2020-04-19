@@ -155,7 +155,7 @@ func (t *RedBlackTree) insertFix(x *RedBlackTreeNode) {
 
 }
 
-func (t *RedBlackTree) Delete(i int) error {
+func (t *RedBlackTree) locateNode(i int) (*RedBlackTreeNode, error) {
 	cur := t.root
 	p := cur
 	for cur != t.leaf {
@@ -169,14 +169,104 @@ func (t *RedBlackTree) Delete(i int) error {
 		}
 	}
 
-	return t.delete(p)
+	if p == t.leaf {
+		return nil, fmt.Errorf("Can't delete leaf")
+	}
+	return p, nil
+}
+
+func (t *RedBlackTree) Delete(i int) error {
+	p, err := t.locateNode(i)
+	if err != nil {
+		return err
+	}
+
+	err = t.delete(p)
+	if err == nil {
+		t.length--
+	}
+	return nil
+}
+
+func (t *RedBlackTree) instead(x, y *RedBlackTreeNode) {
+	if x.parent == t.leaf {
+		t.root = y
+	} else if x.parent.left == x {
+		x.parent.left = y
+	} else {
+		x.parent.right = y
+	}
+	y.parent = x.parent
+}
+
+func (t *RedBlackTree) minNode(x *RedBlackTreeNode) *RedBlackTreeNode {
+	cur := x
+	p := cur
+	for cur != t.leaf {
+		p = cur
+		cur = x.left
+	}
+	return p
 }
 
 func (t *RedBlackTree) delete(x *RedBlackTreeNode) error {
 	if x == t.leaf {
 		return fmt.Errorf("Can't delete leaf")
 	}
+	color := x.color
+	var y *RedBlackTreeNode
+	if x.left == t.leaf {
+		y = x.right
+		t.instead(x, y)
+	} else if x.right == t.leaf {
+		y = x.left
+		t.instead(x, y)
+	} else {
+		d := t.minNode(x.right)
+		y = d.right
+		color = d.color
+		if d.parent != x {
+			t.instead(d, d.right)
+			d.right = x.right
+			x.right.parent = d
+		}
+		t.instead(x, d)
+		d.left = x.left
+		x.left.parent = d
+		d.color = x.color
+
+	}
+
+	if color {
+		t.deleteFix(y)
+	}
 	return nil
+}
+
+func (t *RedBlackTree) deleteFix(x *RedBlackTreeNode) {
+	for x != t.leaf && x.color {
+		if x == x.parent.left {
+			w := x.parent.right
+			if !w.color {
+				x.parent.color = false
+				w.color = false
+				t.leftRotate(x.parent)
+			} else if w.left.color && w.right.color && w.color {
+				w.color = false
+				x = x.parent
+			} else if !w.left.color && w.right.color && w.color {
+				w.left.color = true
+				w.color = false
+				t.rightRotate(w)
+			} else if !w.right.color && w.color {
+				w.color = x.parent.color
+				x.parent.color = true
+				w.right.color = true
+				t.leftRotate(x.parent)
+				x = t.leaf
+			}
+		}
+	}
 }
 
 func (t *RedBlackTree) Depth() int {
