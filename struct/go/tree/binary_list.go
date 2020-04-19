@@ -14,10 +14,10 @@ type BinaryTreeNode struct {
 	index  int
 }
 
-func (t *BinaryTreeNode) Insert(i int, node *BinaryTreeNode) {
+func (t *BinaryTreeNode) Insert(i int, node *BinaryTreeNode) error {
 	cur := t
 	for cur != nil {
-		if cur.index <= node.index {
+		if cur.index < node.index {
 			tmp := cur.right
 			if tmp == nil {
 				cur.right = node
@@ -35,8 +35,12 @@ func (t *BinaryTreeNode) Insert(i int, node *BinaryTreeNode) {
 			} else {
 				cur = tmp
 			}
+		} else {
+			return fmt.Errorf("index %d has exiting", i)
 		}
 	}
+
+	return nil
 }
 
 func (n *BinaryTreeNode) Depth() int {
@@ -183,20 +187,27 @@ func (t *BinaryTree) Depth() int {
 	return t.root.Depth()
 }
 
-func (t *BinaryTree) Insert(i int, v interface{}) {
+func (t *BinaryTree) Insert(i int, v interface{}) error {
 	cur := t.root
 	node := &BinaryTreeNode{
 		value: v,
 		index: i,
 	}
 
+	var err error
+	err = nil
+
 	if t.root == nil {
 		t.root = node
 	} else {
-		cur.Insert(i, node)
+		err = cur.Insert(i, node)
 	}
 
+	if err != nil {
+		return err
+	}
 	t.length++
+	return err
 
 }
 

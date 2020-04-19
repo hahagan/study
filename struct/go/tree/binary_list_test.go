@@ -51,6 +51,12 @@ func testBianaryTreeInsert(t *testing.T, tmp *BinaryTree, v int) {
 	if lengthOld != lengthNew-1 {
 		t.Errorf("testBianaryTreeInsert error, before insert length :%d, after insert length: %d", lengthOld, lengthNew)
 	}
+
+	err := tmp.Insert(v, v)
+	if err == nil {
+		t.Errorf(
+			"testBianaryTreeInsert error, Repeated insertion without error, index: %d", v)
+	}
 }
 
 func testBianaryTreeLength(t *testing.T, tmp *BinaryTree, v int) {
