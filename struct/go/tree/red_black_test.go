@@ -52,12 +52,21 @@ func TestRedBlackTree(t *testing.T) {
 		testRedBlackTreeInsert(t, tmp, rand.Intn(10000))
 	}
 
-	// r := new(link.ArrayLinkList).Init(100000)
-	// tmp.InOrderVist(resultSave(r))
 	for i := 4; i < 1000; i++ {
 		testRedBlackTreeDelete(t, tmp, rand.Intn(10000), want)
 	}
 
+	arr := []int{10, 7, 8, 15, 5, 6, 11, 13, 12}
+	tmp1 := new(RedBlackTree)
+	tmp1.Init()
+	tmp1.locateNode(0)
+	for i := 0; i < len(arr); i++ {
+		tmp1.Insert(arr[i], arr[i])
+	}
+
+	tmp1.locateNode(10)
+	tmp1.Delete(10)
+	tmp1.Delete(21)
 }
 
 func testRedBlackTreeInsert(t *testing.T, tmp *RedBlackTree, v int) {

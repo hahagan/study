@@ -168,13 +168,14 @@ func (t *RedBlackTree) locateNode(i int) (*RedBlackTreeNode, error) {
 	if cur == t.leaf {
 		return nil, fmt.Errorf("Can't localte leaf")
 	}
-
-	if cur.index == i {
-		return cur, nil
-	} else if cur.index < i {
-		cur = cur.right
-	} else {
-		cur = cur.left
+	for cur != t.leaf {
+		if cur.index == i {
+			return cur, nil
+		} else if cur.index < i {
+			cur = cur.right
+		} else {
+			cur = cur.left
+		}
 	}
 
 	return nil, fmt.Errorf("Can't localte leaf")
@@ -219,22 +220,15 @@ func (t *RedBlackTree) delete(z *RedBlackTreeNode) error {
 	color := y.color
 	x := t.leaf
 	if z.left == t.leaf {
-		fmt.Println("-------------------")
-
 		x = z.right
 		t.instead(z, z.right)
 	} else if z.right == t.leaf {
-		fmt.Println("qqqqqqqqqqqqqqqqqqqqqq")
 
 		x = z.left
 		t.instead(z, z.left)
 	} else {
-		fmt.Println("wwwwwwwwwwwwwwwwwwwwwwww", t.length)
-
 		y = t.minNode(z.right)
 		color = y.color
-
-		fmt.Println("wwwwwwwwwwwwwwwwwwwwwwww")
 		x = y.right
 		if y.parent == z {
 			x.parent = y
@@ -265,27 +259,23 @@ func (t *RedBlackTree) deleteFix(x *RedBlackTreeNode) {
 				w.color = true
 				t.leftRotate(x.parent)
 				w = x.parent.parent
-				fmt.Println("111111111111111111")
 			}
 
 			if w.left.color && w.right.color {
 				w.color = false
 				x = x.parent
-				fmt.Println("222222222222222222")
 			} else {
 				if w.right.color {
 					w.left.color = true
 					w.color = false
 					t.rightRotate(w)
 					w = x.parent.right
-					fmt.Println("33333333333333333333")
 				}
 				w.color = w.parent.color
 				w.parent.color = true
 				w.right.color = true
 				t.leftRotate(x.parent)
 				x = t.root
-				fmt.Println("4444444444444444444444")
 			}
 		} else {
 			w := x.parent.left
@@ -294,26 +284,22 @@ func (t *RedBlackTree) deleteFix(x *RedBlackTreeNode) {
 				w.color = true
 				t.rightRotate(x.parent)
 				w = x.parent.left
-				fmt.Println("-11111111111111111")
 			}
 			if w.left.color && w.right.color {
 				w.color = false
 				x = x.parent
-				fmt.Println("-22222222222222222")
 			} else {
 				if w.left.color {
 					w.right.color = true
 					w.color = false
 					t.leftRotate(w)
 					w = x.parent.left
-					fmt.Println("-33333333333333333333")
 				}
 				w.color = x.parent.color
 				w.parent.color = true
 				w.left.color = true
 				t.rightRotate(x.parent)
 				x = t.root
-				fmt.Println("-44444444444444444444444444")
 			}
 		}
 	}
