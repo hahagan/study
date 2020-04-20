@@ -3,6 +3,7 @@ package tree
 import (
 	"fmt"
 
+	_ "github.com/hahagan/study/struct/go/list/link"
 	"github.com/hahagan/study/struct/go/queue"
 	"github.com/hahagan/study/struct/go/stack"
 )
@@ -22,45 +23,46 @@ type RedBlackTree struct {
 	length int
 }
 
-func (t *RedBlackTree) leftRotate(x *RedBlackTreeNode) {
-	y := x.right
-	x.right = y.left
+func (t *RedBlackTree) leftRotate(z *RedBlackTreeNode) {
+	y := z.right
+	z.right = y.left
 
-	if y.left != nil {
-		y.left.parent = x
+	if y.left != t.leaf {
+		y.left.parent = z
 	}
 
-	y.parent = x.parent
-	if x.parent == nil {
+	y.parent = z.parent
+
+	if z == t.root {
 		t.root = y
-	} else if x == x.parent.left {
-		x.parent.left = y
+	} else if z == z.parent.left {
+		z.parent.left = y
 	} else {
-		x.parent.right = y
+		z.parent.right = y
 	}
-	y.left = x
-	x.parent = y
+	y.left = z
+	z.parent = y
 
 }
 
-func (t *RedBlackTree) rightRotate(y *RedBlackTreeNode) {
-	x := y.left
-	y.left = x.right
+func (t *RedBlackTree) rightRotate(z *RedBlackTreeNode) {
+	y := z.left
+	z.left = y.right
 
-	if x.right != nil {
-		x.right.parent = y
+	if y.right != t.leaf {
+		y.right.parent = z
 	}
 
-	x.parent = y.parent
-	if y.parent == nil {
-		t.root = x
-	} else if y.parent.left == y {
-		y.parent.left = x
+	y.parent = z.parent
+	if z == t.root {
+		t.root = y
+	} else if z.parent.left == z {
+		z.parent.left = y
 	} else {
-		y.parent.right = y
+		z.parent.right = y
 	}
-	x.right = y
-	y.parent = x
+	y.right = z
+	z.parent = y
 }
 
 func (t *RedBlackTree) Init() *RedBlackTree {
@@ -80,11 +82,12 @@ func (t *RedBlackTree) Insert(i int, v interface{}) error {
 	cur := t.root
 	p := cur
 	node := &RedBlackTreeNode{
-		value: v,
-		index: i,
-		color: false,
-		left:  t.leaf,
-		right: t.leaf,
+		value:  v,
+		index:  i,
+		color:  false,
+		left:   t.leaf,
+		right:  t.leaf,
+		parent: t.leaf,
 	}
 
 	for cur != t.leaf {
@@ -98,8 +101,6 @@ func (t *RedBlackTree) Insert(i int, v interface{}) error {
 		}
 	}
 
-	node.parent = p
-
 	if p == t.leaf {
 		node.parent = t.leaf
 		t.root = node
@@ -108,71 +109,75 @@ func (t *RedBlackTree) Insert(i int, v interface{}) error {
 	} else {
 		p.left = node
 	}
+	node.parent = p
 
 	t.insertFix(node)
 	t.length++
 	return nil
 }
 
-func (t *RedBlackTree) insertFix(x *RedBlackTreeNode) {
-	if x.parent == t.leaf {
-		x.color = true
+func (t *RedBlackTree) insertFix(s *RedBlackTreeNode) {
+	if s.parent == t.leaf {
+		s.color = true
 		return
 	}
-	for !x.parent.color {
-		if x.parent == x.parent.parent.left {
-			uncle := x.parent.parent.right
+	for !s.parent.color {
+		if s.parent == s.parent.parent.left {
+			uncle := s.parent.parent.right
 			if !uncle.color {
 				uncle.color = true
-				x.parent.color = true
-				x.parent.parent.color = false
-				x = x.parent.parent
-			} else if x == x.parent.right {
-				x = x.parent
-				t.leftRotate(x)
+				s.parent.color = true
+				s.parent.parent.color = false
+				s = s.parent.parent
 			} else {
-				x.parent.color = true
-				x.parent.parent.color = false
-				t.rightRotate(x.parent.parent)
+				if s == s.parent.right {
+					s = s.parent
+					t.leftRotate(s)
+				}
+				s.parent.color = true
+				s.parent.parent.color = false
+				t.rightRotate(s.parent.parent)
 			}
 		} else {
-			uncle := x.parent.parent.right
-			if !uncle.color {
-				uncle.color = true
-				x.parent.color = true
-				x.parent.parent.color = false
-				x = x.parent.parent
-			} else if x == x.parent.left {
-				x = x.parent
-				t.rightRotate(x)
-			} else {
-				x.parent.color = true
-				x.parent.parent.color = false
-				t.leftRotate(x.parent.parent)
+			if s.parent == s.parent.parent.right {
+				uncle := s.parent.parent.left
+				if !uncle.color {
+					uncle.color = true
+					s.parent.color = true
+					s.parent.parent.color = false
+					s = s.parent.parent
+				} else {
+					if s == s.parent.left {
+						s = s.parent
+						t.rightRotate(s)
+					}
+					s.parent.color = true
+					s.parent.parent.color = false
+					t.leftRotate(s.parent.parent)
+				}
 			}
 		}
+
 	}
 
+	t.root.color = true
 }
 
 func (t *RedBlackTree) locateNode(i int) (*RedBlackTreeNode, error) {
 	cur := t.root
-	p := cur
-	for cur != t.leaf {
-		p = cur
-		if p.index < i {
-			cur = p.right
-		} else if p.index > i {
-			cur = p.left
-		} else {
-			break
-		}
+	if cur == t.leaf {
+		return nil, fmt.Errorf("Can't localte leaf")
 	}
 
-	if p == t.leaf {
-		return nil, fmt.Errorf("Can't delete leaf")
+	if cur.index == i {
+		return cur, nil
+	} else if cur.index < i {
+		cur = cur.right
+	} else {
+		cur = cur.left
 	}
-	return p, nil
+
+	return nil, fmt.Errorf("Can't localte leaf")
 }
 
 func (t *RedBlackTree) Delete(i int) error {
@@ -180,7 +185,6 @@ func (t *RedBlackTree) Delete(i int) error {
 	if err != nil {
 		return err
 	}
-
 	err = t.delete(p)
 	if err == nil {
 		t.length--
@@ -201,72 +205,119 @@ func (t *RedBlackTree) instead(x, y *RedBlackTreeNode) {
 
 func (t *RedBlackTree) minNode(x *RedBlackTreeNode) *RedBlackTreeNode {
 	cur := x
-	p := cur
-	for cur != t.leaf {
-		p = cur
-		cur = x.left
+	for cur.left != t.leaf {
+		cur = cur.left
 	}
-	return p
+	return cur
 }
 
-func (t *RedBlackTree) delete(x *RedBlackTreeNode) error {
-	if x == t.leaf {
+func (t *RedBlackTree) delete(z *RedBlackTreeNode) error {
+	if z == t.leaf {
 		return fmt.Errorf("Can't delete leaf")
 	}
-	color := x.color
-	var y *RedBlackTreeNode
-	if x.left == t.leaf {
-		y = x.right
-		t.instead(x, y)
-	} else if x.right == t.leaf {
-		y = x.left
-		t.instead(x, y)
+	y := z
+	color := y.color
+	x := t.leaf
+	if z.left == t.leaf {
+		fmt.Println("-------------------")
+
+		x = z.right
+		t.instead(z, z.right)
+	} else if z.right == t.leaf {
+		fmt.Println("qqqqqqqqqqqqqqqqqqqqqq")
+
+		x = z.left
+		t.instead(z, z.left)
 	} else {
-		d := t.minNode(x.right)
-		y = d.right
-		color = d.color
-		if d.parent != x {
-			t.instead(d, d.right)
-			d.right = x.right
-			x.right.parent = d
+		fmt.Println("wwwwwwwwwwwwwwwwwwwwwwww", t.length)
+
+		y = t.minNode(z.right)
+		color = y.color
+
+		fmt.Println("wwwwwwwwwwwwwwwwwwwwwwww")
+		x = y.right
+		if y.parent == z {
+			x.parent = y
+		} else {
+			t.instead(y, y.right)
+			y.right = z.right
+			y.right.parent = y
 		}
-		t.instead(x, d)
-		d.left = x.left
-		x.left.parent = d
-		d.color = x.color
+		t.instead(z, y)
+		y.left = z.left
+		z.left.parent = y
+		y.color = z.color
 
 	}
 
 	if color {
-		t.deleteFix(y)
+		t.deleteFix(x)
 	}
 	return nil
 }
 
 func (t *RedBlackTree) deleteFix(x *RedBlackTreeNode) {
-	for x != t.leaf && x.color {
+	for x != t.root && x.color {
 		if x == x.parent.left {
 			w := x.parent.right
 			if !w.color {
 				x.parent.color = false
-				w.color = false
+				w.color = true
 				t.leftRotate(x.parent)
-			} else if w.left.color && w.right.color && w.color {
+				w = x.parent.parent
+				fmt.Println("111111111111111111")
+			}
+
+			if w.left.color && w.right.color {
 				w.color = false
 				x = x.parent
-			} else if !w.left.color && w.right.color && w.color {
-				w.left.color = true
-				w.color = false
-				t.rightRotate(w)
-			} else if !w.right.color && w.color {
-				w.color = x.parent.color
-				x.parent.color = true
+				fmt.Println("222222222222222222")
+			} else {
+				if w.right.color {
+					w.left.color = true
+					w.color = false
+					t.rightRotate(w)
+					w = x.parent.right
+					fmt.Println("33333333333333333333")
+				}
+				w.color = w.parent.color
+				w.parent.color = true
 				w.right.color = true
 				t.leftRotate(x.parent)
-				x = t.leaf
+				x = t.root
+				fmt.Println("4444444444444444444444")
+			}
+		} else {
+			w := x.parent.left
+			if !w.color {
+				x.parent.color = false
+				w.color = true
+				t.rightRotate(x.parent)
+				w = x.parent.left
+				fmt.Println("-11111111111111111")
+			}
+			if w.left.color && w.right.color {
+				w.color = false
+				x = x.parent
+				fmt.Println("-22222222222222222")
+			} else {
+				if w.left.color {
+					w.right.color = true
+					w.color = false
+					t.leftRotate(w)
+					w = x.parent.left
+					fmt.Println("-33333333333333333333")
+				}
+				w.color = x.parent.color
+				w.parent.color = true
+				w.left.color = true
+				t.rightRotate(x.parent)
+				x = t.root
+				fmt.Println("-44444444444444444444444444")
 			}
 		}
 	}
+	x.color = true
 }
 
 func (t *RedBlackTree) Depth() int {

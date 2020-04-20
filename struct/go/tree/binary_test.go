@@ -22,15 +22,15 @@ func TestBinaryTree(t *testing.T) {
 	testBinaryTreeLength(t, tmp, 3)
 	testBinaryTreeDepth(t, tmp, times)
 
-	fmt.Println("testPrevOrderVist")
+	fmt.Println("testBinaryTreePrevOrderVist")
 	want := []int{0, -1, 1}
 	testBinaryTreePrevOrderVist(t, tmp, want)
 
-	fmt.Println("testInOrderVist")
+	fmt.Println("testBinaryTreeInOrderVist")
 	want = []int{-1, 0, 1}
 	testBinaryTreeInOrderVist(t, tmp, want)
 
-	fmt.Println("testPostOrderVist")
+	fmt.Println("testBinaryTreePostOrderVist")
 	want = []int{-1, 1, 0}
 	testBinaryTreePostOrderVist(t, tmp, want)
 }
