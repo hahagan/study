@@ -87,11 +87,11 @@ addr  opcode         p1    p2    p3    p4             p5  comment
 * sqlite3CompleteInsertion生成提Insert操作码，其p2为MakeRecord的P4的值，即同一个寄存器的地址，用于读取生成的数据项
 
 最终在sqlite3_step函数，调用sqlite3VdbeExec时，便会自上而下的执行生成的字节码。
-    * 例如，Interger会将2写入p2代表的寄存器中，即对应r[2]
-    * String8将test1存入R[3]中
-    * MakeRecord会以P1代表的连续存储地址代表的存储为首地址，读取P2中值的个数个数据，即读取r[2],r[3]形成一条数据向，并保存到P4值存储的寄存器地址中，即r[4]
-    * Insert会从P4值代表的寄存器地址中读取数据项，即从r[4]中读取数据，并完成insert操作
-    * 最后遇到Halt操作码，表示执行结束，结束字节码的运行
+* 例如，Interger会将2写入p2代表的寄存器中，即对应r[2]
+* String8将test1存入R[3]中
+* MakeRecord会以P1代表的连续存储地址代表的存储为首地址，读取P2中值的个数个数据，即读取r[2],r[3]形成一条数据向，并保存到P4值存储的寄存器地址中，即r[4]
+* Insert会从P4值代表的寄存器地址中读取数据项，即从r[4]中读取数据，并完成insert操作
+* 最后遇到Halt操作码，表示执行结束，结束字节码的运行
 
 ### INSERT语法解释
 ```
