@@ -36,7 +36,7 @@ spl的解析过程，首先经过词法分析器取出sql语句中的一个词(�
          ```
         cmd ::= with insert_cmd(R) INTO xfullname(X) idlist_opt(F) select(S).
         {
-          sqlite3Insert(pParse, X, S, F, R, U);
+          sqlite3Insert(pParse, X, S, F, R, U); // X 表名,S为子查询,F为属性名与值列表,U为Upsert
         }
         
         insert_cmd(A) ::= INSERT orconf(R).   {A = R;}
@@ -93,3 +93,29 @@ addr  opcode         p1    p2    p3    p4             p5  comment
     * Insert会从P4值代表的寄存器地址中读取数据项，即从r[4]中读取数据，并完成insert操作
     * 最后遇到Halt操作码，表示执行结束，结束字节码的运行
 
+### INSERT语法解释
+```
+cmd ::= with insert_cmd(R) INTO xfullname(X) idlist_opt(F) select(S).
+{
+  sqlite3Insert(pParse, X, S, F, R, U); 
+}
+
+X为表名
+S为子查询
+F为属性名与值列表
+R为插入操作发生错误时的处理，sqlite3定义的有'REPLACE','ROLLBACK','ABORT','FALI','IGNORE'
+U为出现冲突时的处理语句
+```
+* 语句
+`INSERT INTO Students ('id','name') VALUES (0,'test1');`
+对应到上式X为Student,X为空,F为"('id','name') VALUES (0,'test1')"形成的结构化变量列表，
+R、U、S为空。因此Splite3Insert会将有"select(S)"生成的查询字节码删除，从而优化字节码流程<br/>
+* 语句
+`INSERT INTO Students SELECT FROM Student1;`
+此时F,R,U为空，但S为查询Student1非空。因此Splite3Insert会将有Select代表的字节码进行优化和处理，从而使得将查询的语句合并到插入生成的字节码<br/>
+* 语句 
+`INSERT INTO Students ('id','name') VALUES (0,'test1') ON CONFICT DO NOTHING`
+此时u表示当insert出现冲突时不做处理<br/>
+* 语句 
+`INSERT INTO OR ROLLBACK Students ('id','name') VALUES (0,'test1')`
+R表示当出现错误时进行回滚
