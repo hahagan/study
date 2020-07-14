@@ -25,7 +25,7 @@ Arrow 列示存储.md
 	* a List<T>-type parent array has a T-type array as its child
 * logical type： 使用某些物理布局实现面向应用程序的语义值类型
 
-## 物理内存结构
+## 物理内存布局
 数组定义：
 * logical type
 * 连续的buffer
@@ -34,7 +34,7 @@ Arrow 列示存储.md
 * 可选的dictionary，用于字典编码的数组
 * 嵌套类型中额外的chilld arrays项
 
-### 物理结构类型
+### 物理内存布局类型
 
 * primitive(fixes-size): 拥有相同类型或位宽的序列
 * Variable-size： 拥有可变字节长度的序列。
@@ -70,88 +70,9 @@ values = [0, 1, null, 2, null ,3] => 使用LSB编码，一组8个位中 LSBbitma
 
 嵌套类型具有自己的空位图和空计数，不管子数组的空值和空位
 
-## primitive型结构
-primitive值数组代表了一个拥有相同物理槽宽度数据组成的数组。
-槽宽度一般使用字节衡量，特殊的使用bit-packed类型提供。
+## 逻辑类型
+[Schema.fbs](https://github.com/apache/arrow/blob/master/format/Schema.fbs)定义了内置的逻辑类型。每种逻辑雷系通过使用上述的内存布局类型实现
 
-通常数组包含一个连续的内存缓冲区，其大小至少于其槽宽的整数倍相同.
-相关位图连续分配，但不必于数据缓存相邻
-```
-[1, null, 2, 4, 8]
-
-
-* Length: 5, Null count: 1
-* Validity bitmap buffer:
-
-  |Byte 0 (validity bitmap) | Bytes 1-63            |
-  |-------------------------|-----------------------|
-  | 00011101                | 0 (padding)           |
-
-* Value Buffer:
-
-  |Bytes 0-3   | Bytes 4-7   | Bytes 8-11  | Bytes 12-15 | Bytes 16-19 | Bytes 20-63 |
-  |------------|-------------|-------------|-------------|-------------|-------------|
-  | 1          | unspecified | 2           | 4           | 8           | unspecified |
-```
-
-### Variable-size Binary Layou
-由offsset和data缓存区组成。
-offset缓冲区含有length+1个符号整型组成，代表了每个在data缓冲区中的数据的起始偏移量。offset两个临值的差用于计算对应data的长度
-offset缓冲区中最后一个槽位数组长度
-
-### Variable-size List Layou
-嵌套类型。由两个buffer，一个位图，一个人offset buffer和一个子数组组成。
-布局类似，不过offset偏移量代表子数组的数据项索引
-```
-[[12, -7, 25], null, [0, -127, 127, 50], []]
-
-* Length: 4, Null count: 1
-* Validity bitmap buffer:
-
-  | Byte 0 (validity bitmap) | Bytes 1-63            |
-  |--------------------------|-----------------------|
-  | 00001101                 | 0 (padding)           |
-
-* Offsets buffer (int32)
-
-  | Bytes 0-3  | Bytes 4-7   | Bytes 8-11  | Bytes 12-15 | Bytes 16-19 | Bytes 20-63 |
-  |------------|-------------|-------------|-------------|-------------|-------------|
-  | 0          | 3           | 3           | 7           | 7           | unspecified |
-
-offset buffer指向了values array对应的数据
-
-* Values array (Int8array):
-  * Length: 7,  Null count: 0
-  * Validity bitmap buffer: Not required
-  * Values buffer (int8)
-
-    | Bytes 0-6                    | Bytes 7-63  |
-    |------------------------------|-------------|
-    | 12, -7, 25, 0, -127, 127, 50 | unspecified |
-```
-
-```
-[[12, -7, 25], null, [0, -127, 127, 50], []]
-
-* Length: 4, Null count: 1
-* Validity bitmap buffer:
-
-  | Byte 0 (validity bitmap) | Bytes 1-63            |
-  |--------------------------|-----------------------|
-  | 00001101                 | 0 (padding)           |
-
-* Offsets buffer (int32)
-
-  | Bytes 0-3  | Bytes 4-7   | Bytes 8-11  | Bytes 12-15 | Bytes 16-19 | Bytes 20-63 |
-  |------------|-------------|-------------|-------------|-------------|-------------|
-  | 0          | 3           | 3           | 7           | 7           | unspecified |
-
-* Values array (Int8array):
-  * Length: 7,  Null count: 0
-  * Validity bitmap buffer: Not required
-  * Values buffer (int8)
-
-    | Bytes 0-6                    | Bytes 7-63  |
-    |------------------------------|-------------|
-    | 12, -7, 25, 0, -127, 127, 50 | unspecified |
-```
+## 扩展自定义类型
+略
+ 

@@ -14,8 +14,8 @@ import pickle
 
 logging.basicConfig(level=logging.DEBUG)
 
-LARGE_TIMES = 1
-SMALL_TIMES = 1
+LARGE_TIMES = 1000
+SMALL_TIMES = 1000
 
 
 def test():
@@ -176,50 +176,81 @@ if __name__ == '__main__':
     test_file = "test1.json"
     test_file = os.path.join("practice", "json_data", test_file)
 
+    # logging.info("包含文件打开的，json数据转换:")
+    # test_json_file_to_arrow(test_file)
+    # test_json_file_to_dict(test_file)
+
     # batch = pa_json.read_json(test_file)
     with open(test_file) as fin:
-        batch = json.load(fin)
-        batch = pa.Table.from_pydict({'hits': batch['hits']['hits']})
+        raw_dict = json.load(fin)
+        raw_dict = {'hits': raw_dict['hits']['hits'] * 1}
+        batch = pa.Table.from_pydict(raw_dict)
 
-    logging.info("包含文件打开的，json数据转换:")
-    test_json_file_to_arrow(test_file)
-    test_json_file_to_dict(test_file)
+    # logging.info("arrow 序列化反序列化:")
+    # buf = test_serialize(batch)
+    # data = test_deserialize(buf)
 
-    logging.info("arrow 序列化反序列化:")
-    buf = test_serialize(batch)
-    data = test_deserialize(buf)
+    raw_bytes = str.encode(json.dumps(raw_dict))
+    print("raw txt: ", len(raw_bytes))
+    print("Table: ", batch.nbytes)
+    buf = pa.serialize(batch).to_buffer()
+    print("serialize buf: ", len(buf.to_pybytes()))
 
-    logging.info("arrow 压缩buf")
-    compress = test_compress(buf)
-    decompress = test_decompress(compress, decompressed_size=buf.size)
+    com_buf = pa.compress(buf, codec='gzip')
+    com_txt = pa.compress(raw_bytes, codec='gzip')
 
-    logging.info("arrow 压缩流 处理buf")
-    test_compress_stream(buf)
+    print("compressed raw txt", len(com_txt.to_pybytes()))
+    print("compress buf: ", len(com_buf.to_pybytes()))
+    print(buf.to_pybytes())
+    print(raw_bytes)
 
-    with open(test_file) as fin:
-        batch1 = json.load(fin)
+    # array = batch.to_batches()[0][0]
+    # field = ['_id', '_index', '_score', '_source', '_type']
+    # sum = 0
+    # array_size = 0
+    # for i in field:
+    #     tmp = array.field(i)
+    #     print('-'*50)
+    #     print(i, tmp.nbytes)
+    #     array_size += tmp.nbytes
+    #     tmp = pa.serialize(tmp).to_buffer().to_pybytes()
+    #     print(i,tmp.__sizeof__())
+    #     tmp = pa.compress(tmp)
+    #     print(i, tmp.size)
+    #     sum += tmp.size
+    # print(sum, array_size)
 
-    logging.info("arrow 序列化反序列化dict:")
-    buf = test_serialize(batch1)
-    data = test_deserialize(buf)
-
-    logging.info("python pickle 序列化反序列化:")
-    ctx = test_pickle_serialize(batch1)
-    data1 = test_pickle_deserialize(ctx)
-
-    logging.info("python json模块 序列化反序列化:")
-    ctx = test_json_dumps(batch1)
-    data2 = test_json_loads(ctx)
+    # logging.info("arrow 压缩buf")
+    # compress = test_compress(buf)
+    # decompress = test_decompress(compress, decompressed_size=buf.size)
     #
-    logging.info("arrow ipc模块 写入与读取:")
-    ctx = pa.serialize(batch)
-    sink = test_output_ipc(batch)
-    t = sink.getvalue()
-    batch2 = test_input_ipc(t)
-
-    logging.info("arrow table与dict对象转换:")
-    d = test_arrow_to_dict(batch2)
-    t = test_dict_to_arrow(d)
+    # logging.info("arrow 压缩流 处理buf")
+    # test_compress_stream(buf)
+    #
+    # with open(test_file) as fin:
+    #     batch1 = json.load(fin)
+    #
+    # logging.info("arrow 序列化反序列化dict:")
+    # buf = test_serialize(batch1)
+    # data = test_deserialize(buf)
+    #
+    # logging.info("python pickle 序列化反序列化:")
+    # ctx = test_pickle_serialize(batch1)
+    # data1 = test_pickle_deserialize(ctx)
+    #
+    # logging.info("python json模块 序列化反序列化:")
+    # ctx = test_json_dumps(batch1)
+    # data2 = test_json_loads(ctx)
+    # #
+    # logging.info("arrow ipc模块 写入与读取:")
+    # ctx = pa.serialize(batch)
+    # sink = test_output_ipc(batch)
+    # t = sink.getvalue()
+    # batch2 = test_input_ipc(t)
+    #
+    # logging.info("arrow table与dict对象转换:")
+    # d = test_arrow_to_dict(batch2)
+    # t = test_dict_to_arrow(d)
 
     # socket 传输
     # ctx = pa.serialize(batch).to_buffer()

@@ -1,0 +1,63 @@
+# msyql数据查询实例
+
+## 定义数据源
+```
+source lj_source
+{
+	types = mysql
+	sql_host = xxx
+	sql_user = xxx
+	sql_pass = xxx
+	sql_db = test
+
+	sql_query_pre = SET NAMES utf8
+	sql_query = SELECT id, channel_id, ts, title, content \
+						FROM ljposts \
+						WHERE id >=$start and id<=$end
+
+	sql_attr_unit = channel_id
+	sql_attr_timestamp = ts
+	sql_query_range = SELECT MIN(id), MAX(id) FROM ljposts
+	sql_range_step = 1000
+}
+```
+
+## 索引配置
+```
+index lj
+{
+	source = lj_source
+	path = /my/index/path/lj_index
+
+	html_strip = 1
+	html_index_attrs = img=src,alt; a=href,title
+
+	morpthology = stem_en
+	stopwords = stopwords.txt
+	charset_type = utf-8
+}
+```
+
+## 索引者配置
+```
+indexer
+{
+	mem_limit = 512M
+	max_iops = 40
+	max_iosize = 1048576
+}
+```
+
+## 搜索配置
+```
+searchd
+{
+	listen = localhost:9312
+	listen = localhost:9306:mysql4
+	preopen_indexes = 1
+	max_packaet_size = 8M
+	query_log_format = sphinxql
+	query_log = query.log
+	pid_file = search.pid
+}
+```

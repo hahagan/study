@@ -3,6 +3,8 @@ search源码阅读.md
 # Csearch正则匹配流程
 ![csearch](googleCodeSearch/csearch.png)
 
+
+
 # codesearch.rexp.Regexp与字节码程序生成
 
 ### 构建流程
@@ -62,7 +64,7 @@ codesearch.regexp.Regexp对标准正则库syntax.Regexp进行封装，并对synt
 // Regexp is the representation of a compiled regular expression.
 // A Regexp is NOT SAFE for concurrent use by multiple goroutines.
 type Regexp struct {
-    Syntax *syntax.Regexp
+    Syntax *syntax.Regexp //标准库的正则对象
     expr   string // original expression
     m      matcher
 }
@@ -126,21 +128,6 @@ func (b *runeBuilder) uncachedSuffix(lo, hi byte, fold bool, next uint32) uint32
 # csearch正则匹配部分流程主要数据结构与源代码
 ![csearch](googleCodeSearch/csearch.png)
   对应上图中甬道"codesearch.regexp.matcher"和"computeNext与step"部分
-### regexp.synstax
-``` go
-// A Regexp is a node in a regular expression syntax tree.
-type Regexp struct {
-    Op       Op // operator
-    Flags    Flags
-    Sub      []*Regexp  // subexpressions, if any
-    Sub0     [1]*Regexp // storage for short Sub
-    Rune     []rune     // matched runes, for OpLiteral, OpCharClass
-    Rune0    [2]rune    // storage for short Rune
-    Min, Max int        // min, max for OpRepeat
-    Cap      int        // capturing index, for OpCapture
-    Name     string     // capturing name, for OpCapture
-}
-```
 
 ## codesearch.regexp.Regexp的匹配
 
@@ -155,7 +142,7 @@ start和startline状态为matcher实例在使用前，通过正则表达式的�
 ```go
 // A matcher holds the state for running regular expression search.
 type matcher struct {
-    prog      *syntax.Prog       // compiled program
+    prog      *syntax.Prog       // compiled program,存储着对应正则表达式的字节码
     dstate    map[string]*dstate // dstate cache
     start     *dstate            // start state
     startLine *dstate            // start state for beginning of line
@@ -312,6 +299,25 @@ type Query struct {
     Op      QueryOp
     Trigram []string
     Sub     []*Query
+}
+
+// A regexpInfo summarizes the results of analyzing a regexp.
+type regexpInfo struct {
+    // canEmpty records whether the regexp matches the empty string
+    canEmpty bool
+
+    // exact is the exact set of strings matching the regexp.
+    exact stringSet
+
+    // if exact is nil, prefix is the set of possible match prefixes,
+    // and suffix is the set of possible match suffixes.
+    prefix stringSet // otherwise: the exact set of matching prefixes ...
+    suffix stringSet // ... and suffixes
+
+    // match records a query that must be satisfied by any
+    // match for the regexp, in addition to the information
+    // recorded above.
+    match *Query
 }
 ```
 
