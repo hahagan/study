@@ -1,0 +1,229 @@
+== 日志采集 数据流处理
+
+- https://github.com/timberio/vector
+- https://github.com/diyan/pywinrm  
+- https://github.com/childe/gohangout
+- https://github.com/ucbrise/confluo 重点
+- https://github.com/neomantra/lds 嵌入的 LuaJIT 引擎需要
+- https://github.com/guigrpa/storyboard
+- https://github.com/sematext/logagent-js
+- https://github.com/sipcapture/paStash 重要，宣称兼容 logstash
+
+=== eBPF
+
+- https://github.com/redsift/ingraind
+- https://github.com/iovisor/ubpf
+- https://github.com/sharklinux/shark bpf 用于性能监控
+
+== 搜索
+
+- https://github.com/bayard-search/bayard
+- https://github.com/launchbadge/sqlx  SQL 解析
+- https://github.com/valeriansaliou/sonic
+- https://github.com/go-ego/riot
+- https://github.com/toshi-search/Toshi
+- https://github.com/tantivy-search/tantivy
+- https://github.com/phaistos-networks/Trinity
+- https://github.com/wheresvic/zsearch
+
+=== 数据库
+
+- https://github.com/canonical/dqlite
+- https://github.com/manticoresoftware/galera
+- https://github.com/manticoresoftware/manticoresearch
+- https://github.com/pilosa/pilosa  非常重要
+- https://github.com/viyadb/viyadb
+- https://calcite.apache.org/
+- https://sled.rs/
+- https://github.com/milvus-io/milvus
+- https://github.com/datrs/hypercore
+- https://github.com/indradb/indradb
+- https://github.com/apache/arrow/tree/master/rust/datafusion
+- https://github.com/emitter-io/emitter
+- https://github.com/eventql/eventql
+- https://github.com/indygreg/zippylog
+- https://github.com/ClickHouse/ClickHouse
+- https://github.com/pipelinedb/pipelinedb
+
+=== OLAP
+
+- https://github.com/vectorengine/vectorsql
+- https://github.com/vaexio/vaex
+- https://github.com/dremio/gandiva
+- https://github.com/IntelPython/sdc
+- https://github.com/frankmcsherry/columnation
+- https://github.com/shunfei/indexr
+
+== 数据压缩
+
+- https://github.com/byronknoll/cmix
+
+== JIT
+
+- https://github.com/Jittor/jittor
+- https://github.com/numba/llvmlite
+- https://github.com/weld-project/weld
+- https://github.com/lvzixun/lvmjit
+- https://github.com/kernelsauce/turbo
+- https://github.com/studio/studio
+
+== Lambda 计算 / 类 AWS
+
+- https://github.com/weaveworks/ignite
+- https://bhyve.org/
+
+== 控制台
+
+- https://github.com/ChrisPenner/LumberJack
+- https://github.com/tstack/lnav
+- https://github.com/IBM/kui 并不是一个真正的 CLI
+- https://github.com/kui-shell/oui#readme,  这两个项目可以用于在浏览器中模拟 CLI
+- https://github.com/dche423/temi
+- https://github.com/smoove/cli-crypto-charts
+- https://github.com/guigrpa/storyboard
+- https://github.com/saulpw/visidata
+- https://github.com/vrecan/FluxDash
+- https://github.com/gizak/termui
+- https://github.com/FormidableLabs/nodejs-dashboard
+- https://github.com/yaronn/blessed-contrib
+
+== 日志系统
+
+- https://github.com/grafana/loki 轻量级的类 ELK 的日志
+- https://github.com/juttle/juttle-engine 已经带了 Job 调度，其中 Juttle 语言与 SPL 类似
+- https://github.com/influxdata/kapacitor
+    Open source framework for processing, monitoring, and alerting on time series data
+    提供了 管道 + 函数调用的访问方式
+- https://github.com/flant/loghouse 利用 clickhouse 的日志系统
+- https://github.com/Jacksgong/okcat 轻量级日志分析系统
+- http://logstats.org/ 轻量级分析系统
+- https://github.com/phaistos-networks/TANK 声称高性能的日志系统， 需要进一步分析它 Topic 怎么处理的
+- facebook logdevice
+- https://github.com/cisco/joy 抓包分析
+- https://github.com/dspinellis/dgsh 命令管道
+- https://github.com/xuri/aurora 另一个任务管理器
+- https://github.com/moby/datakit 另一个命令管道
+- https://github.com/viralogic/py-enumerable 查询方式，是否考虑 LINQ
+- https://github.com/arthurprs/floki 类 kafka 的队列
+- https://github.com/dase/CLAIMS 实时数据流查询
+    Beneficial from the smart and massively parallelism and the in-memory data processing optimizations, CLAIMS is up to 5X faster than Shark and Impala, two state-of-the-art systems in the open source community, in the queries against TPCH dataset and Shanghai Stock Exchange dataset.
+
+=== 作业调度
+
+- https://github.com/DrakeW/corgi
+- https://github.com/grailbio/reflow 
+
+    A language and runtime for distributed, incremental data processing in the cloud
+- https://github.com/Netflix/Lipstick Pig Job 的可视化
+- https://github.com/camsas/firmament
+- https://github.com/chrislusf/gleam
+- https://github.com/pachyderm/pachyderm
+
+=== CEP
+
+- https://github.com/siddhi-io/siddhi
+
+== APM
+
+- https://github.com/naver/pinpoint
+- https://github.com/jaegertracing/jaeger
+- https://github.com/GoogleChrome/lighthouse
+- https://github.com/opentracing
+
+== UI
+
+- https://github.com/PrefectHQ/prefect
+- https://github.com/seenaburns/dex-ui
+- https://github.com/sipcapture/homer-ui 重要，仪表盘
+
+== 数据流设计
+
+- https://github.com/WeBankFinTech/DataSphereStudio
+- https://github.com/zeebe-io/zeebe
+- https://github.com/zeebe-io/zeebe-modeler
+- https://github.com/nokia/CloudFlow
+- https://github.com/argoproj/argo
+- https://github.com/bptlab/gryphon
+- https://github.com/spring-cloud/spring-cloud-dataflow
+- https://github.com/m-reda/pipeline
+- node-red
+- https://github.com/NathanFlurry/VisualProgrammingLanguage
+- https://github.com/streamsets/datacollector
+
+== 可视化
+
+- https://github.com/gicentre/litvis
+- https://github.com/alibaba/butterfly
+- https://github.com/CreativeCodingLab/Inviso
+- https://github.com/vega/voyager
+- https://github.com/Kanaries/Rath 重点
+- https://github.com/jupyter-attic/dashboards
+- https://github.com/dutchcoders/marija
+- https://github.com/widestage/widestage
+- https://github.com/mmcloughlin/globe
+- https://github.com/CreativeCodingLab/NeuroCave
+- https://github.com/plouc/nivo
+- https://github.com/YahooArchive/swiv
+- https://github.com/tabixio/tabix
+- https://github.com/PatMartin/Dex
+- https://github.com/nnajm/orb
+- https://github.com/metabase/metabase
+- https://github.com/keen/explorer
+- https://github.com/getredash/redash
+- https://github.com/jjmontesl/cubesviewer
+
+=== 序列的可视化
+
+- https://github.com/explosion/displacy-ent
+- https://github.com/CreativeCodingLab/TextAnnotationGraphs
+- https://github.com/nlplab/brat
+- https://github.com/weitechen/anafora
+
+== 测试工具
+
+- https://github.com/pingcap/chaos-mesh
+- https://github.com/alexei-led/pumba
+- https://github.com/Juniper/wistar
+- https://github.com/clownix/cloonix
+- https://github.com/containernet/vim-emu
+- https://github.com/losfair/vmesh
+
+=== API 测试
+
+- https://github.com/typicode/json-server
+- https://github.com/dareid/chakram
+
+== 奇奇怪怪的其他
+
+- https://github.com/google/shenzhen-go
+- 简易操作系统 https://github.com/SerenityOS/serenity
+- https://github.com/koute/memory-profiler
+- 文档管理 https://github.com/doczjs/docz
+- https://github.com/hachikuji/kafka-specification , Kakfa 分布式算法的 TLA+ 规格说明
+- https://github.com/wulkano/Kap
+- https://github.com/uber-archive/pyflame
+- https://github.com/hokein/Automata.js
+- https://github.com/francoislaberge/diagrams
+- https://github.com/mozilla/rr
+- https://github.com/cs01/gdbgui
+- https://github.com/zchee/clang-server
+- https://github.com/Redocly/redoc
+- https://github.com/dthree/vantage
+- https://github.com/msteinert/bstring
+- https://github.com/Yelp/firefly
+
+== Rust 常见的库
+
+- https://github.com/crossbeam-rs/crossbeam
+- https://github.com/audreyt/regex-genex
+
+
+== 其他厂商？
+
+https://github.com/sematext
+
+https://github.com/logscape/Logscape
+
+http://sipcapture.org/
+
+https://rakam.io/
