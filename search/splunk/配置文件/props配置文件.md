@@ -118,8 +118,8 @@ props.conf可配置能力：
 通过`LINE_BREAK`对数据流分行，将`SHOULD_LINEMERGE`设置为true，通过`BREAK_ONLY_BEFORE, BREAK_ONLY_BEFORE_DATE, MUST_BREAK_AFTER`配置其多行合并行为
 
 #### 多行合并的有效配置
-* `BREAK_ONLY_BEFORE_DATE = [true|false]`: 默认为true，当发现新行中存在时间时，形成新事件
-* `BREAK_ONLY_BEFORE = <regular expression>`: 默认为空，配置后，如果发现了新行中匹配该正则，则生成新事件
+* `BREAK_ONLY_BEFORE_DATE = [true|false]`: 默认为true，只有当发现新行中存在时间时，形成新事件
+* `BREAK_ONLY_BEFORE = <regular expression>`: 默认为空，配置后，只有发现了新行中匹配该正则，则生成新事件
 * `MUST_BREAK_AFTER = <regular expression>`: 当配置匹配时，下一行将作为新事件，本行仍会继续匹配其他规则并进行处理
 * `MUST_NOT_BREAK_AFTER = <regular expression>`:  当配置时，如果本行匹配了该正则，那么在匹配`MUST_BREAK_AFTER`前都不会后续行不会中断当前事件。
 * `MUST_NOT_BREAK_BEFORE = <regular expression>`: 当配置，并在本行匹配时，在本行结束前不会中断当前事件。
