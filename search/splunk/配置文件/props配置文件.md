@@ -118,16 +118,27 @@ props.conf可配置能力：
 通过`LINE_BREAK`对数据流分行，将`SHOULD_LINEMERGE`设置为true，通过`BREAK_ONLY_BEFORE, BREAK_ONLY_BEFORE_DATE, MUST_BREAK_AFTER`配置其多行合并行为
 
 #### 多行合并的有效配置
-* `BREAK_ONLY_BEFORE_DATE = [true|false]`: 默认为true，只有当发现新行中存在时间时，形成新事件
-* `BREAK_ONLY_BEFORE = <regular expression>`: 默认为空，配置后，只有发现了新行中匹配该正则，则生成新事件
+* `BREAK_ONLY_BEFORE_DATE = [true|false]`: 默认为true，只有当发现新行中存在时间时，本行之前的行形成新事件
+* `BREAK_ONLY_BEFORE = <regular expression>`: 默认为空，配置后，只有发现了新行中匹配该正则，本行之前的行生成新事件
 * `MUST_BREAK_AFTER = <regular expression>`: 当配置匹配时，下一行将作为新事件，本行仍会继续匹配其他规则并进行处理
-* `MUST_NOT_BREAK_AFTER = <regular expression>`:  当配置时，如果本行匹配了该正则，那么在匹配`MUST_BREAK_AFTER`前都不会后续行不会中断当前事件。
+* `MUST_NOT_BREAK_AFTER = <regular expression>`:  当配置时，如果本行匹配了该正则，那么在行匹配`MUST_BREAK_AFTER`前都不会后续行不会中断当前事件。
 * `MUST_NOT_BREAK_BEFORE = <regular expression>`: 当配置，并在本行匹配时，在本行结束前不会中断当前事件。
 * `MAX_EVENTS = <integer>`: 默认256行，指定一个事件的最大行数，当达到这个值时将会中断事件
 
+### ref
+https://docs.splunk.com/Documentation/Splunk/8.0.5/Data/Configureeventlinebreaking
+
 #### todo: 
+splunk页面有BUG，无法正确识别配置文件，不要在页面上进行配置或查看配置
 * 确定这些配置的优先级，顺序
+  * `MUST_BREAK_AFTER` > `MUST_NOT_BREAK_BEFORE`
+  * `MUST_NOT_BREAK_AFTER` > `BREAK_ONLY_BEFORE`
+  * `MUST_NOT_BREAK_BEFORE`没发现有卵用啊
 * 确定这些配置覆盖场景
+  * `MUST_BREAK_AFTER`当前行匹配后，下一行作为新事件处理，适用于知道事件的结束匹配模式的场景，往往于`MUST_NOT_BREAK_AFTER`结合。
+  * `MUST_NOT_BREAK_AFTER`用在当前行匹配模式后，不会形成事件，适用于已知事件的开始行和结束行模式匹配的场景。
+  * `BREAK_ONLY_BEFORE`适用于知道事件的结束匹配模式的场景，将本行之前的数据形成事件。与`MUST_BREAK_AFTER`区别在于，本行数据属于新事件。并且优先级低于`MUST_NOT_BREAK_AFTER`
+  * `BREAK_ONLY_BEFORE_DATE`适用于通过时间进行事件划分的模式
 
 ## 时间提取
 ### 定义

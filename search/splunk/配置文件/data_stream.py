@@ -2,9 +2,9 @@ import re
 import logging
 import os
 
-kv_pat = re.compile(r"\s*(?P<attr>\w+)(-(?P<class>[\w,]+))?\s*=\s*(?P<value>.*)$")
-ignore_pat = re.compile(r"\s*#+|\s*$")
-stanza_pat = re.compile(r"\s*\[\s*((?P<type>\w+)::)?(?P<pat>[\w\-.()?+-\\/*{}|!~#$]+)\s*\]")
+kv_pat = re.compile(r"^\s*(?P<attr>\w+)(-(?P<class>[\w,]+))?\s*=\s*(?P<value>.*)$")
+ignore_pat = re.compile(r"^\s*#+|^\s*$")
+stanza_pat = re.compile(r"^\s*\[\s*((?P<type>\w+)::)?(?P<pat>[\w\-.()?+-\\/*{}|!~#$]+)\s*\]")
 
 
 
@@ -41,7 +41,7 @@ class Output(object):
             text = fin.readlines()
         
         result = dict()
-        cur = Transform(name="default", pat=None, stanta_type='default')
+        cur = Output(name="default", pat=None, stanta_type='default')
 
         for l in text:
             if re.match(ignore_pat, l):
@@ -74,7 +74,7 @@ class Output(object):
                     name = m['pat']
                 stanza_type = m['type'] if not m['type'] else "sourcetype"
                 pat = m['pat']
-                cur = Transform(name, stanza_type, pat)
+                cur = Output(name, stanza_type, pat)
 
 
         return result
