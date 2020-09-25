@@ -31,29 +31,29 @@ props.conf可配置能力：
 #### [\<spec>]
 `[<spec>]`
 语句块起始，`<spec>`用于为匹配该属性的事件启动某些特性，一个props中可能会有很多不同的语句块，每个语句块头部后跟随这若干配置对。如果未设置语句块头，默认为default
-    * `<spec>`可选值有：
-        * `<sourcetype>`，通过sourcetype选择需要处理的event
-            * 大小写敏感
-        * `host::<host>`, 通过host字段选择event
-            * 大小写不敏感，有利于dns域名识别，可通过在开头添加"(?-i)"正则使其大小写敏感
-        * `source::<source>`, 通过source选择event
-            * ... recurses through directories until the match is met or equivalently, matches any number of characters.
-            * \*   matches anything but the path separator 0 or more times.The path separator is '/' on unix, or '\' on Windows.Intended to match a partial or complete directory or filename.
-            * |   is equivalent to 'or'
-            * ( ) are used to limit scope of |.
-            * \\\ = matches a literal backslash '\'.
-            * Example: [source::....(?<!tar.)(gz|bz2)]
-        * `rule::<rulename>`, 通过rulename选择event
-        * `delayedrule::<rulename>`, todo
-        * todo,一个event同时设置了以上值后数据处理流程
-    * 语句块冲突处理
-        * 注意如果存在多个语句块冲突，例如`[host::<host>]`和`[<sourcetype>]`都指向同一个event，那么它们之间会存在覆盖或者合并。覆盖规则为：
-            * `[host::<host>]`配置会覆盖`[<sourcetype>]`配置
-            * `[source::<source>]`会覆盖`[host::<host>]`,`[host::<host>]`
-        * 对于`[source::<source>] and [host::<host>]`支持PCRE正则，但其中的"..."，"*"和"."会被转换。"."匹配句点，"*"匹配非目录分隔符,"…"匹配任意数量的任意字符。
-        * 支持给定的输入匹配多个[source::<source]，并且将这些配置合并应用到该输入数据中，但如果配置项出现冲突，例如都同时配置`sourcetype`时，会根据ASCII属性呢选择配置的值，例如同时设置`sourcetype`为'a'或'z'时，此时会设置为'a'。另一种合并策略时通过设置配置项`priority`，优先级最高者为最终设置值，
-        * 最终`[<spec>]`的语句块的构造是通过综合合并**字符匹配**和**模式匹配**的语句块得到，如果每个语句块中定义了优先级，则根据优先级进行合并，**字符匹配**默认优先级为100，**字符匹配**默认优先级为0
-        * 语句块的优先级设置可以处理`[<sourcetype>]`或`[host::<host>]`语句块间的冲突,决定谁覆盖谁。然而不能改变不同种类的\<spec>间的覆盖行为，例如无论`[<sourcetype>]`的优先级有多高，都不会改变`[host::<host>]`配置会覆盖`[<sourcetype>]`配置的行为
+* `<spec>`可选值有：
+    * `<sourcetype>`，通过sourcetype选择需要处理的event
+        * 大小写敏感
+    * `host::<host>`, 通过host字段选择event
+        * 大小写不敏感，有利于dns域名识别，可通过在开头添加"(?-i)"正则使其大小写敏感
+    * `source::<source>`, 通过source选择event
+        * ... recurses through directories until the match is met or equivalently, matches any number of characters.
+        * \*   matches anything but the path separator 0 or more times.The path separator is '/' on unix, or '\' on Windows.Intended to match a partial or complete directory or filename.
+        * |   is equivalent to 'or'
+        * ( ) are used to limit scope of |.
+        * \\\ = matches a literal backslash '\'.
+        * Example: [source::....(?<!tar.)(gz|bz2)]
+    * `rule::<rulename>`, 通过rulename选择event
+    * `delayedrule::<rulename>`, todo
+    * todo,一个event同时设置了以上值后数据处理流程
+* 语句块冲突处理
+    * 注意如果存在多个语句块冲突，例如`[host::<host>]`和`[<sourcetype>]`都指向同一个event，那么它们之间会存在覆盖或者合并。覆盖规则为：
+        * `[host::<host>]`配置会覆盖`[<sourcetype>]`配置
+        * `[source::<source>]`会覆盖`[host::<host>]`,`[host::<host>]`
+    * 对于`[source::<source>] and [host::<host>]`支持PCRE正则，但其中的"..."，"*"和"."会被转换。"."匹配句点，"*"匹配非目录分隔符,"…"匹配任意数量的任意字符。
+    * 支持给定的输入匹配多个[source::<source]，并且将这些配置合并应用到该输入数据中，但如果配置项出现冲突，例如都同时配置`sourcetype`时，会根据ASCII属性呢选择配置的值，例如同时设置`sourcetype`为'a'或'z'时，此时会设置为'a'。另一种合并策略时通过设置配置项`priority`，优先级最高者为最终设置值，
+    * 最终`[<spec>]`的语句块的构造是通过综合合并**字符匹配**和**模式匹配**的语句块得到，如果每个语句块中定义了优先级，则根据优先级进行合并，**字符匹配**默认优先级为100，**字符匹配**默认优先级为0
+    * 语句块的优先级设置可以处理`[<sourcetype>]`或`[host::<host>]`语句块间的冲突,决定谁覆盖谁。然而不能改变不同种类的\<spec>间的覆盖行为，例如无论`[<sourcetype>]`的优先级有多高，都不会改变`[host::<host>]`配置会覆盖`[<sourcetype>]`配置的行为
 
 #### priority
 `priority = <number>`
@@ -165,7 +165,10 @@ MAX_DIFF_SECS_HENCE = <integer>
 * 值为CURRENT时，将当前系统时间分配给每个事件
     * 多行合并时的时间，或者说提交给聚合程序的时间
 * "NONE"和"CURRENT"都显示的禁用了每个文本的时间戳识别，因此默认的事件边界配置`BREAK_ONLY_BEFORE_DATE = true`会显得没有生效。当使用这些配置时，应该结合`SHOULD_LINEMERGE` 和/或`BREAK_ONLY_*` ,`MUST_BREAK_*`这些配置对事件合并进行控制.
-* 默认为/etc/datetime.xml,需要继续学习该配置
+* 默认为/etc/datetime.xml
+* 该配置之所以被称为时间提取处理器，是因为该配置指向的文件是一组正则表达式模板，这些正则表达式指明了如何从数据中提取出各个时间戳字段。
+  * 共7种时间提取模板，11种日期提取模板。并根据模板不同提取出来的字段各有差异
+  * 正是基于这些默认的时间模板，splunk在时间识别一文说，如果没有特殊情况，不需要额外的配置splunk就能够识别出数据中的事件戳。
 
 #### TIME_PREFIX
 `TIME_PREFIX = <regular expression>`
@@ -184,6 +187,8 @@ MAX_DIFF_SECS_HENCE = <integer>
 * "strptime"指行业标准指定的时间戳格式(详细信息位于"Configure timestamp recognition)
 * 该提取在`TIME_PREFIX`匹配后开始
 * `<strptime-style format>`应能描述具体的日期与在当天的时间
+* 当设置了该值，并且没有设置`TIME_PREFIX`,那么在event的头部则必须匹配该设置，否则将会引起splunk的使用无效strptime的告警
+  * 这个说明意味着，如果配置了该值将会导致`DATETIME_CONFIG`配置无效
 * 默认为空
 
 #### TZ_ALIAS

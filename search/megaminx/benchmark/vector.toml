@@ -1,0 +1,53 @@
+data_dir = "/tmp/vector"
+
+## tcp接收
+[sources.input]
+  type = "socket" # required
+  address = "0.0.0.0:5140" # required, required when mode = "tcp" or mode = "udp"
+  max_length = 102400 # optional, default, bytes, relevant when mode = "tcp" or mode = "unix"
+  mode = "tcp" # required
+
+# ## 多行合并接收性性能测试数据
+# [sources.input]
+#   # General
+#   type = "file" # required
+#   ignore_older = 86400 # optional, no default, seconds
+#   include = ["/tmp/vector/raw/*.log"] # required
+#   start_at_beginning = true # optional, default
+#   # Multiline
+#   multiline.condition_pattern = "^[\\s]+\\d{4}-\\d{2}-\\d{2}\\s+\\d{2}:\\d{2}:\\d{2},\\d{3}\\s+\\w+" # required
+#   multiline.mode = "continue_through" # required
+#   multiline.start_pattern = "^" # required
+#   multiline.timeout_ms = 1000 # required, milliseconds
+
+
+## 字段提取，正则
+[transforms.rexgex]
+  # General
+  type = "regex_parser" # required
+  inputs = ["input"] # required
+  drop_field = false # optional, default
+  field = "message" # optional, default
+  patterns = "(?P<time>\\d{4}-\\d{2}-\\d{2}\\s+\\d{2}:\\d{2}:\\d{2},\\d{3}) (?P<level>\\w+) (?P<device>[\\.\\w]+): (?P<ctx>.+)*" # required
+
+# ## 性能测试数据处理结果输出
+# [sinks.output]
+#   type = "file"
+#   inputs = ["input"]
+#   path = "/tmp/vector/tmp.log"
+#   encoding = "ndjson"
+
+## 接收结束信号
+[sources.signal]
+  type = "socket" # required
+  address = "0.0.0.0:5141" # required, required when mode = "tcp" or mode = "udp"
+  max_length = 102400 # optional, default, bytes, relevant when mode = "tcp" or mode = "unix"
+  mode = "tcp" # required
+
+## 结束信号记录
+[sinks.signal_out]
+  type = "file"
+  inputs = ["signal"]
+  path = "/tmp/vector/end.log"
+  # Encoding
+  encoding = "ndjson"
