@@ -45,7 +45,7 @@ spl的解析过程，首先经过词法分析器取出sql语句中的一个词(�
 
 
     * 在向lemonParser传递INTO分词后，"INSERT INTO"满足 "cmd ::= with insert_cmd(R) INTO xfullname(X) idlist_opt(F) DEFAULT VALUES."的产生式中的"insert_cmd(R)"部分非终结符的语法，那么此时就会根据insert_cmd(R)的产生式定义的操作。顺序如下
-
+    
         ```
         1. A' = OE_Default // 对应 onconf(A) ::= .       {A =OE_Default;}
         2. A = A'        // 对应 insert_cmd(A) ::= INSERT orconf(R).   {A = R;}
@@ -58,7 +58,7 @@ spl的解析过程，首先经过词法分析器取出sql语句中的一个词(�
 
 
 ## INSERT语句字节码生成
-这里通过介绍最简单的INSERT语句的字节码生成流程(即sqlite3Insert函数流程)来如何生成字节码和OPCODE<br>
+这里通过介绍最简单的INSERT语句的字节码生成流程(即sqlite3Insert函数流程)来	如何生成字节码和OPCODE<br>
 ![sqlite3Insert函数流程](images/sqlite/3.Insert语句字节节码生成.png)
 ```
 sqlite> explain insert into t1 values(42， "test1");

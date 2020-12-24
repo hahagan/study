@@ -302,7 +302,7 @@ admin级别的事件时区解释
 
 ### SEDCMD
 `SEDCMD-<class> = <sed script>`
-仅在inde-time使用，用于处理敏感信息，应用于_raw字段
+仅在index-time使用，用于处理敏感信息，应用于_raw字段
 * `<sed script>`空格分隔的sed命令列表组成的sed脚本，目前仅支持替换操作(s)和**字符**替换(y)
 * 一条命令的格式 `s(y)/regex/replacement/flags`，flags支持g表示全匹配替换，或者使用数字指定特定匹配
 

@@ -28,7 +28,7 @@ data_dir = "/tmp/vector"
   inputs = ["input"] # required
   drop_field = false # optional, default
   field = "message" # optional, default
-  patterns = "(?P<time>\\d{4}-\\d{2}-\\d{2}\\s+\\d{2}:\\d{2}:\\d{2},\\d{3}) (?P<level>\\w+) (?P<device>[\\.\\w]+): (?P<ctx>.+)*" # required
+  patterns = ["(?P<time>\\d{4}-\\d{2}-\\d{2}\\s+\\d{2}:\\d{2}:\\d{2},\\d{3}) (?P<level>\\w+) (?P<device>[\\.\\w]+): (?P<ctx>.+)*"] # required
 
 # ## 性能测试数据处理结果输出
 # [sinks.output]
