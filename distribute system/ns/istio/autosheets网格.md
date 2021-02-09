@@ -8,7 +8,7 @@
 
 4. **带有 app 和 version 标签（label）的 Deployment**: 建议显式地给 Deployment 加上 `app` 和 `version` 标签。给使用 Kubernetes `Deployment` 部署的 Pod 部署配置中增加这些标签，可以给 Istio 收集的指标和遥测信息中增加上下文信息。
 
-5. 根据使用需要charts中可能需要增加标签注入，注解注入
+5. 根据使用需要charts中可能需要增加标签注入，注解注入。提供可注入便于使用者提供全局参数。
    1. 注解注入可以使部署时注入特殊用途的注解，例如istio是否需要注入
    2. 标签注入同上，例如模块管理
    
@@ -46,13 +46,30 @@
    
    
    
-6. 增加charts使用的的serviceaccoount
+6. 增加charts使用的的serviceaccoount。
 
 7. 内部服务间的访问，目前基于https访问nginx负载到对应服务，但对应不服可能只提供http，因此如果需要直连，需要能够提供配置项，而不是硬编码。
 
+```
+depServices:
+  efastdaemon:
+    privateHttpHost: 192.168.79.79
+    privateHttpPort: "9080"
+  hydra:
+    administrativeHost: 192.168.79.79
+    administrativePort: "9080"
+  ## 如果与sheet间的通信直接改为服务和服务间通信，那么就会造成无法通过配置修改。此时sheet提供http，而客户端仍然通过https访问
+  sheet:
+    publicHost: 192.168.79.79
+    publicPort: "443"
+
+```
+
+
+
 8. charts中各个服务的values的depservice，将对应IP改为slb-nginx入口。手工调整很麻烦
-   1. 基于第7，第8点与slb的调整，考虑对网络访问进行规划，从配置上能生成slb-nginx，charts需要使用的网络配置。例如加入网络集群规划，再最后配置service_access.conf中体现，或者各个服务自行管理配置，更上层的服务解析各个服务配置并集成体现在service_access.conf。
-   2. 访问IP可参考，k8s域名规划并按需要进行扩展。svc.nampsapce.cluster.local或version.svc.namespace.cluster.location或svc.namespace.cluster.appcluster.platformcluster.location
+9. 基于第7，第8点与slb的调整，考虑对网络访问进行规划，从配置上能生成slb-nginx，charts需要使用的网络配置。例如加入网络集群规划，再最后配置service_access.conf中体现，或者各个服务自行管理配置，更上层的服务解析各个服务配置并集成体现在service_access.conf。
+10. 访问IP可参考，k8s域名规划并按需要进行扩展。svc.nampsapce.cluster.local或version.svc.namespace.cluster.location或svc.namespace.cluster.appcluster.platformcluster.location
 
 
 
@@ -65,12 +82,18 @@ nginx对应服务路由地址由nginx-ingresscontroller调整为istio入口istio
 ### 三、istio相关
 
 1. 自动注入默认行为，默认注入或默认不注入。影响服务部署配置，默认不注入，则对有需要的pod需要添加特定注解
+
 2. ingressgateway网关配置和virtualservice配置
+   
    1. 考虑基于网络规则自动读取配置生成或由各个服务开发按一定规则声明
-3. 网关外服务访问，需要设置se将网格外服务注册到网格内，考虑通过网络规划，识别配置生成。
+   
+3. 网关外服务访问，需要设置se将网格外服务注册到网格内，通过网络规划，识别配置生成。**如何规划**
+
 4. grafana、prometheus监控集成，如何将istio的监控集成到已有的监控平台上？
-5. 高可用问题，分布式链路追踪、监控数据高可用。istio自身数据目前未发现其自身自带的数据库而是基于k8s平台进行crd管理，可能不暂时不需要考虑(又似乎有某种资源需要)。待进行
-6. 性能、稳定性、资源。待评估
+
+5. 高可用问题，分布式链路追踪、监控数据高可用。istio自身数据目前未发现其自身自带的数据库而是基于k8s平台进行crd管理，可能不暂时不需要考虑(又似乎有某种资源需要)。**待进行**
+
+6. 性能、稳定性、资源。**待评估**
    1. 由于流量网格内流量被sidecar劫持，因此sidecar的不稳定因素也增加了服务的不稳定性
    2. 性能，官方声称每个请求会增加延时6ms，待验证但以此为前提。但是需要注意一个服务如果是延时敏感型(或实时要求较高)型服务则需要慎重考虑是否进行sidecar流量拦截，或者数据间有逻辑顺序无法并行处理的服务不适合
       1. 什么是延时敏感型，我也不知道。那什么服务可以放入istio服务网格，有sidecar进行流量劫持进行额外处理
@@ -82,10 +105,62 @@ nginx对应服务路由地址由nginx-ingresscontroller调整为istio入口istio
       1. 第一种资源为流量劫持后进行处理需要对流量进行额外处理、请求指标收集，因此需要额外的计算资源，在服务器负载(业务)较高时可能会有所影响，待深入。
       2. 第二种资源为流量转发需要耗费的额外网络流量(服务->虚拟网卡->sidecar->虚拟网卡->服务)，待研究。
       3. istio自身配置同步的资源占用。目前环境来看不高，但当网格内的负载较高后并不确定。
+   
 7. 网络影响，pod外无法直接通过svc或pod IP连接网格内服务，需要通过对外网格ingressgateway或网格内服务。原因待探索。
-8. 安全认证，目前自带的认证token与istio不同，导致istio开启认证后连接在sidecar处被拦截，需要取消其认证行为。如何兼容待探索。需要结合接下来如何使用认证考虑与尝试。
-9. 安装部署与集成，目前为最简模式部署，复杂模型下的集成待尝试。
-10. 网格外服务注册ServiceEntry，目前尝试发现，设置的se在无法使用虚假的域名进行连接，在缺少dns服务器的情况下需要指定外部服务的ip地址并且需要为其设置网格内的虚拟IP。
+
+8. **安全认证**，目前自带的认证token与istio不同，导致istio开启认证后连接在sidecar处被拦截，需要取消其认证行为。如何兼容待探索。需要结合接下来如何使用认证考虑与尝试。
+
+9. 安装部署与集成，目前为最简模式部署，**复杂模型**下的集成待尝试。
+
+10. 网格外服务注册ServiceEntry，目前尝试发现，设置的se在**无法使用虚假的域名**进行连接，在**缺少dns服务器的情况下需要指定外部服务的ip地址并且需要为其设置网格内的虚拟IP**。例如以下配置中无法通过域名或IP进行访问，而是通过虚拟IP。这意味我们需要管理虚拟IP
+
+    ```
+    kind: ServiceEntry
+    metadata:
+      name: slb-nginx
+      namespace : anyshare
+    spec:
+      hosts:
+        - qwe.asd
+      location: MESH_EXTERNAL
+      addresses:
+      #- 192.168.78.78/32
+      - 10.5.5.5/32
+      ports:
+        - name: http
+          number: 80
+          protocol: http
+      resolution: STATIC
+      endpoints:
+      - address: 192.168.79.79  # 自定义一个内网的ip
+        ports:
+          http: 80
+    ---
+    apiVersion: networking.istio.io/v1alpha3
+    kind: ServiceEntry
+    metadata:
+      name: rds-out
+      namespace : anyshare
+    spec:
+      hosts:
+        - qwe.zxc
+      location: MESH_EXTERNAL
+      addresses:
+      - 10.5.5.4/32
+      ports:
+        - name: tcp
+          number: 3320
+          protocol: tcp
+      resolution: STATIC
+      endpoints:
+      - address: 192.168.79.79  # 自定义一个内网的ip
+        ports:
+          tcp: 3320
+    ```
+
+    
+
+11. istio使用问题，出现问题，**如何排查**
 
 
 
