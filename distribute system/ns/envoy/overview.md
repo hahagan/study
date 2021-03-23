@@ -8,8 +8,8 @@
 
 ![](https://www.servicemesher.com/istio-handbook/images/concepts-envoy-arch-simple.png)
 
-1. 上游(Upstream): 数据请求的入口方向被称之为下游，在istio中又对应pod之外的客户端连接
-2. 下游(Downstream): 数据请求的出口方向则称之为上游，在istio中对应pod之内被流量拦截的服务
+1. 下游(Upstream): 数据请求的入口方向被称之为下游，在istio中又对应pod之外的客户端连接
+2. 上游(Downstream): 数据请求的出口方向则称之为上游，在istio中对应pod之内被流量拦截的服务
 3. 监听器(Listener): Envoy 使用监听器（Listener）来监听数据端口，接受下游连接和请求；
    1. istio中的sidecar proxy默认使用了端口为15090的端口作为prometheus遥测相关接口
    2. istio中的sidecar proxy默认使用了端口为15021端口作为istio-agent健康检查端口

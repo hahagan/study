@@ -1,3 +1,7 @@
+[toc]
+
+
+
 # 一、配置项
 
 ## role::Proxy配置
@@ -612,7 +616,7 @@ type Options struct {
 
 # 二、运行实体
 
-## SDS服务
+## SDS与xDS服务代理端
 
 ### 初始化
 
@@ -632,9 +636,291 @@ type Options struct {
 			sa := istio_agent.NewAgent(&proxyConfig, agentConfig, secOpts)
 ```
 
+### 启动
+
+代码中将会启动通过`server, err := sds.NewServer(sa.secOpts, sa.WorkloadSecrets, gatewaySecretCache)`代码启动SDS服务，通过`sa.xdsProxy, err = initXdsProxy(sa)`启动对envoy的xDS代理，由istio-agent为envoy提供服务端，实际是istiod服务器的xDS代理。两者都是通过本地的unix socket文件为envoy提供入口，对应文件位于**/etc/*istio/proxy**
+
+```go
+// /root/src/go/src/github.com/istio/pkg/istio-agent/agent.go
+
+// Simplified SDS setup. This is called if and only if user has explicitly mounted a K8S JWT token, and is not
+// using a hostPath mounted or external SDS server.
+//
+// 1. External CA: requires authenticating the trusted JWT AND validating the SAN against the JWT.
+//    For example Google CA
+//
+// 2. Indirect, using istiod: using K8S cert.
+//
+// 3. Monitor mode - watching secret in same namespace ( Ingress)
+//
+// 4. TODO: File watching, for backward compat/migration from mounted secrets.
+func (sa *Agent) Start(isSidecar bool, podNamespace string) (*sds.Server, error) {
+
+	// TODO: remove the caching, workload has a single cert
+	if sa.WorkloadSecrets == nil {
+		sa.WorkloadSecrets, _ = sa.newWorkloadSecretCache()
+	}
+
+	var gatewaySecretCache *cache.SecretCache
+	if !isSidecar {
+		if gatewaySdsExists() {
+			log.Infof("Starting gateway SDS")
+			sa.secOpts.EnableGatewaySDS = true
+			// TODO: what is the setting for ingress ?
+			sa.secOpts.GatewayUDSPath = strings.TrimPrefix(model.CredentialNameSDSUdsPath, "unix:")
+			gatewaySecretCache = sa.newSecretCache(podNamespace)
+		} else {
+			log.Infof("Skipping gateway SDS")
+			sa.secOpts.EnableGatewaySDS = false
+		}
+	}
+
+	server, err := sds.NewServer(sa.secOpts, sa.WorkloadSecrets, gatewaySecretCache)
+	if err != nil {
+		return nil, err
+	}
+
+	// Start the local XDS generator.
+	if sa.localXDSGenerator != nil {
+		err = sa.startXDSGenerator(sa.proxyConfig, sa.WorkloadSecrets, podNamespace)
+		if err != nil {
+			return nil, fmt.Errorf("failed to start local xds generator: %v", err)
+		}
+	}
+
+	if err = sa.initLocalDNSServer(isSidecar); err != nil {
+		return nil, fmt.Errorf("failed to start local DNS server: %v", err)
+	}
+	if sa.cfg.ProxyXDSViaAgent {
+		sa.xdsProxy, err = initXdsProxy(sa)
+		if err != nil {
+			return nil, fmt.Errorf("failed to start xds proxy: %v", err)
+		}
+	}
+	return server, nil
+}
+```
+
+#### SDS服务代理
+
+istio-agent通过本地文件**/etc/istio/proxy/SDS**为envoy提供了sds的grpc服务，在envoy中定义的sds服务如下，而istio-agent则实现了`StreamSecrets`和`FetchSecrets`
+
+```go
+// /root/src/go/pkg/mod/github.com/envoyproxy/go-control-plane@v0.9.8-0.20201019204000-12785f608982/envoy/service/secret/v3/sds.pb.go
+
+var _SecretDiscoveryService_serviceDesc = grpc.ServiceDesc{
+	ServiceName: "envoy.service.secret.v3.SecretDiscoveryService",
+	HandlerType: (*SecretDiscoveryServiceServer)(nil),
+	Methods: []grpc.MethodDesc{
+		{
+			MethodName: "FetchSecrets",
+			Handler:    _SecretDiscoveryService_FetchSecrets_Handler,
+		},
+	},
+	Streams: []grpc.StreamDesc{
+		{
+			StreamName:    "DeltaSecrets",
+			Handler:       _SecretDiscoveryService_DeltaSecrets_Handler,
+			ServerStreams: true,
+			ClientStreams: true,
+		},
+		{
+			StreamName:    "StreamSecrets",
+			Handler:       _SecretDiscoveryService_StreamSecrets_Handler,
+			ServerStreams: true,
+			ClientStreams: true,
+		},
+	},
+	Metadata: "envoy/service/secret/v3/sds.proto",
+}
+```
+
+
+
+在`FetchSecrets`中获取的token为k8s的audience `istio-token` token(k8s的audience为istio-ca且过期自动乱转的serviceAccountToken)或从请求上下文中的header的`istio_sds_credentail_header`或`authorization`值。
+
+通过`s.st.GenerateSecret(ctx, connID, resourceName, token)`完成密钥的重新生成。
+
+`s.st`实际为初始化部分代码`sa.newWorkloadSecretCache()`创建的一个`SecretCache`实例，`SecretCache`实现了`SecretManager`接口。
+
+在`SecretCache`生成密钥的实现中通过与istiod通信，通过csr验签等完成密钥和证书的生成。详细代码查看`/root/src/go/src/github.com/istio/security/pkg/nodeagent/cache/secretcache.go`的`func (sc *SecretCache) generateSecret(ctx context.Context, token string, connKey ConnKey, t time.Time) (*security.SecretItem, error)`
+
+与istiod的连接与csr的签名代码查看`/root/src/go/src/github.com/istio/security/pkg/nodeagent/caclient/providers/citadel/client.go`。
+
+整个接口流程整理后如下，与官网说明的istio pki流程符合
+
+1. envoy通过sds API 分发证书和密钥请求
+
+2. istio-agent接收sds请求，创建密钥和csr。并发往istiod进行签名，这个过程中使用的是为k8s分配的serviceAccountToken `istio-token` 
+
+3. istiod的ca对csr进行签名生成证书。
+
+4. istio-agent接收来自istiod的证书，并将证书与密钥通过grpc发给envoy
+
+   
+
+```go
+// /root/src/go/src/github.com/istio/security/pkg/nodeagent/sds/sdsservice.go
+
+// FetchSecrets generates and returns secret from SecretManager in response to DiscoveryRequest
+func (s *sdsservice) FetchSecrets(ctx context.Context, discReq *discovery.DiscoveryRequest) (*discovery.DiscoveryResponse, error) {
+	token := ""
+	if s.localJWT {
+		t, err := s.getToken()
+		if err != nil {
+			sdsServiceLog.Errorf("Failed to get credential token: %v", err)
+			return nil, err
+		}
+		token = t
+	} else if !s.skipToken {
+		t, err := getCredentialToken(ctx)
+		if err != nil {
+			sdsServiceLog.Errorf("Failed to get credential token: %v", err)
+			return nil, err
+		}
+		token = t
+	}
+
+	resourceName, err := getResourceName(discReq)
+	if err != nil {
+		sdsServiceLog.Errorf("Close connection. Error: %v", err)
+		return nil, err
+	}
+
+	connID := constructConnectionID(discReq.Node.Id)
+	secret, err := s.st.GenerateSecret(ctx, connID, resourceName, token)
+	if err != nil {
+		sdsServiceLog.Errorf("Failed to get secret for proxy %q from secret cache: %v", connID, err)
+		return nil, err
+	}
+
+	// Output the key and cert to a directory, if some applications need to read them from local file system.
+	if err = nodeagentutil.OutputKeyCertToDir(s.outputKeyCertToDir, secret.PrivateKey,
+		secret.CertificateChain, secret.RootCert); err != nil {
+		sdsServiceLog.Errorf("(%v) error when output the key and cert: %v",
+			connID, err)
+		return nil, err
+	}
+	return sdsDiscoveryResponse(secret, resourceName, discReq.TypeUrl)
+}
+```
+
+ps: 
+
+1. 卷istiod-ca-cert路径为`/var/run/secrets/istio/root-cert.pem`为istiod的服务器证书，而卷istiod-token为`/var/run/secrets/token`为分配给istio-agent用于请求istiod的jwt token
+
+
+
+#### xDS服务代理
+
+istio-agent的xds代理模块中`func initXdsProxy(ia *Agent) (*XdsProxy, error)`完成对下游(envoy)提供xds服务，而实际上是在envoy通过流式grpc向istio-agent进行xds请求时，istio-agent创建与istiod的连接从而获取对应的xds对象。envoy通过本地unix socket文件**/etc/istio/proxy/XDS**与istio-agent通信。
+
+`func initXdsProxy(ia *Agent) (*XdsProxy, error)`创建了本地xds服务端的unix socket文件**/etc/istio/proxy/XDS**。
+
+与istiod的连接在envoy连入istio-agent时进行，代码如下所示，在接收到grpc连接后会创建子线程用于接收来自envoy的请求，同时当前线程将会创建与istiod的连接。通过一个`ProxyConnection`对象表示两个连接的状态，在istiod连接和envoy连接中传递状态、请求和响应。
+
+相关代码位于`github.com/istio/pkg/istio-agent/xds_proxy.go`
+
+```go
+// /root/src/go/src/github.com/istio/pkg/istio-agent/xds_proxy.go
+
+// Every time envoy makes a fresh connection to the agent, we reestablish a new connection to the upstream xds
+// This ensures that a new connection between istiod and agent doesn't end up consuming pending messages from envoy
+// as the new connection may not go to the same istiod. Vice versa case also applies.
+func (p *XdsProxy) StreamAggregatedResources(downstream discovery.AggregatedDiscoveryService_StreamAggregatedResourcesServer) error {
+	proxyLog.Infof("Envoy ADS stream established")
+
+	con := &ProxyConnection{
+		upstreamError:   make(chan error),
+		downstreamError: make(chan error),
+		requestsChan:    make(chan *discovery.DiscoveryRequest, 10),
+		responsesChan:   make(chan *discovery.DiscoveryResponse, 10),
+		stopChan:        make(chan struct{}),
+		downstream:      downstream,
+	}
+
+	p.RegisterStream(con)
+
+	// Handle downstream xds
+	firstNDSSent := false
+	go func() {
+		for {
+			// From Envoy
+			req, err := downstream.Recv()
+			if err != nil {
+				con.downstreamError <- err
+				return
+			}
+			// forward to istiod
+			con.requestsChan <- req
+			if p.localDNSServer != nil && !firstNDSSent && req.TypeUrl == v3.ListenerType {
+				// fire off an initial NDS request
+				con.requestsChan <- &discovery.DiscoveryRequest{
+					TypeUrl: v3.NameTableType,
+				}
+				firstNDSSent = true
+			}
+		}
+	}()
+
+	ctx, cancel := context.WithTimeout(context.Background(), time.Second*5)
+	defer cancel()
+	upstreamConn, err := grpc.DialContext(ctx, p.istiodAddress, p.istiodDialOptions...)
+	if err != nil {
+		proxyLog.Errorf("failed to connect to upstream %s: %v", p.istiodAddress, err)
+		metrics.IstiodConnectionFailures.Increment()
+		return err
+	}
+	defer upstreamConn.Close()
+
+	xds := discovery.NewAggregatedDiscoveryServiceClient(upstreamConn)
+	ctx = metadata.AppendToOutgoingContext(context.Background(), "ClusterID", p.clusterID)
+	if p.agent.cfg.XDSHeaders != nil {
+		for k, v := range p.agent.cfg.XDSHeaders {
+			ctx = metadata.AppendToOutgoingContext(ctx, k, v)
+		}
+	}
+	// We must propagate upstream termination to Envoy. This ensures that we resume the full XDS sequence on new connection
+	return p.HandleUpstream(ctx, con, xds)
+}
+```
+
+##### 补充
+
+istio-agent的xds服务端定义的service代码如下，是第三方的envoyproxy库提供的，从代码可以看出其要求istio-agent实现`StreamAggregatedResources`和`DeltaAggregatedResources`用于流式grpc与Delta xDS的实现，但是在istio-agent中仅实现了`func (p *XdsProxy) StreamAggregatedResources(downstream discovery.AggregatedDiscoveryService_StreamAggregatedResourcesServer) error`
+
+```go
+// /root/src/go/pkg/mod/github.com/envoyproxy/go-control-plane@v0.9.8-0.20201019204000-12785f608982/envoy/service/discovery/v3/ads.pb.go
+
+var _AggregatedDiscoveryService_serviceDesc = grpc.ServiceDesc{
+	ServiceName: "envoy.service.discovery.v3.AggregatedDiscoveryService",
+	HandlerType: (*AggregatedDiscoveryServiceServer)(nil),
+	Methods:     []grpc.MethodDesc{},
+	Streams: []grpc.StreamDesc{
+		{
+			StreamName:    "StreamAggregatedResources",
+			Handler:       _AggregatedDiscoveryService_StreamAggregatedResources_Handler,
+			ServerStreams: true,
+			ClientStreams: true,
+		},
+		{
+			StreamName:    "DeltaAggregatedResources",
+			Handler:       _AggregatedDiscoveryService_DeltaAggregatedResources_Handler,
+			ServerStreams: true,
+			ClientStreams: true,
+		},
+	},
+	Metadata: "envoy/service/discovery/v3/ads.proto",
+}
+```
+
+
+
 ### 依赖项
 
 依赖于`role`,`secOpts`,`proxyConfig`
+
+
 
 
 
@@ -678,6 +964,8 @@ type Options struct {
 
 ### 初始化
 
+在完成envoy实例的初始化后，通过`agent.restart`完成对envoy的启动，该函数本意为实现热更新，但实际实现上函数未监控任何文件，仅在启动时完成当前轮次的注册，并最终通过调用`func (e *envoy) Run(config interface{}, epoch int, abort <-chan error) error `函数完成子进程envoy实例的启动(详细代码可查看**/root/src/go/src/github.com/istio/pkg/envoy/agent.go**)。这个的agent更多指的父进程对子进程envoy实例的控制。
+
 ```go
 			envoyProxy := envoy.NewProxy(envoy.ProxyConfig{
 				Config:              proxyConfig,
@@ -704,15 +992,116 @@ type Options struct {
 			agent := envoy.NewAgent(envoyProxy, drainDuration)
 
 			// Watcher is also kicking envoy start.
+			// 向watcher注册agent.restart函数，企图实现基于配置文件的热更新，但实际上未实现热更新而是envoy的启动
 			watcher := envoy.NewWatcher(agent.Restart)
 			go watcher.Run(ctx)
 
 			// On SIGINT or SIGTERM, cancel the context, triggering a graceful shutdown
 			go cmd.WaitSignalFunc(cancel)
 
-			// 运行envoy
+			// 阻塞等待envoy当前轮次停止，并清除活动轮次记录
 			return agent.Run(ctx)
 ```
+
+### 运行
+
+代码中通过`func (e *envoy) Run(config interface{}, epoch int, abort <-chan error) error`完成envoy组件所需的配置和启动。代码中的`CreateFileForEpoch`完成从模板文件(/var/lib/istio/envoy/envoy_bootstrap_tmpl.json)读取go template，再配合参数完成对envoy启动配置文件(/etc/istio/proxy/envoy-rev0.json)的设置。最终通过`exec.Command`创建envoy进程。
+
+envoy的配置文件名称含有当前轮次，但由于未实现热更新，所以目前一定为0。
+
+```go
+// /root/src/go/src/github.com/istio/pkg/envoy/proxy.go
+func (e *envoy) Run(config interface{}, epoch int, abort <-chan error) error {
+	var fname string
+	// Note: the cert checking still works, the generated file is updated if certs are changed.
+	// We just don't save the generated file, but use a custom one instead. Pilot will keep
+	// monitoring the certs and restart if the content of the certs changes.
+	if len(e.Config.CustomConfigFile) > 0 {
+		// there is a custom configuration. Don't write our own config - but keep watching the certs.
+		fname = e.Config.CustomConfigFile
+	} else {
+		discHost := strings.Split(e.Config.DiscoveryAddress, ":")[0]
+		out, err := bootstrap.New(bootstrap.Config{
+			Node:                e.Node,
+			Proxy:               &e.Config,
+			PilotSubjectAltName: e.PilotSubjectAltName,
+			LocalEnv:            os.Environ(),
+			NodeIPs:             e.NodeIPs,
+			STSPort:             e.STSPort,
+			ProxyViaAgent:       e.ProxyViaAgent,
+			OutlierLogPath:      e.OutlierLogPath,
+			PilotCertProvider:   e.PilotCertProvider,
+			ProvCert:            e.ProvCert,
+			CallCredentials:     e.CallCredentials,
+			DiscoveryHost:       discHost,
+		}).CreateFileForEpoch(epoch)
+		if err != nil {
+			log.Errora("Failed to generate bootstrap config: ", err)
+			os.Exit(1) // Prevent infinite loop attempting to write the file, let k8s/systemd report
+		}
+		fname = out
+	}
+
+	// spin up a new Envoy process
+	args := e.args(fname, epoch, istioBootstrapOverrideVar.Get())
+	log.Infof("Envoy command: %v", args)
+
+	/* #nosec */
+	cmd := exec.Command(e.Config.BinaryPath, args...)
+	cmd.Stdout = os.Stdout
+	cmd.Stderr = os.Stderr
+	if err := cmd.Start(); err != nil {
+		return err
+	}
+	done := make(chan error, 1)
+	go func() {
+		done <- cmd.Wait()
+	}()
+
+	select {
+	case err := <-abort:
+		log.Warnf("Aborting epoch %d", epoch)
+		if errKill := cmd.Process.Kill(); errKill != nil {
+			log.Warnf("killing epoch %d caused an error %v", epoch, errKill)
+		}
+		return err
+	case err := <-done:
+		return err
+	}
+}
+```
+
+
+
+```go
+// /root/src/go/src/github.com/istio/pkg/bootstrap/instance.go
+func (i *instance) CreateFileForEpoch(epoch int) (string, error) {
+	// Create the output file.
+	if err := os.MkdirAll(i.Proxy.ConfigPath, 0700); err != nil {
+		return "", err
+	}
+
+	templateFile := getEffectiveTemplatePath(i.Proxy)
+
+	outputFilePath := configFile(i.Proxy.ConfigPath, templateFile, epoch)
+	outputFile, err := os.Create(outputFilePath)
+	if err != nil {
+		return "", err
+	}
+	defer func() { _ = outputFile.Close() }()
+
+	// Write the content of the file.
+	if err := i.WriteTo(templateFile, outputFile); err != nil {
+		return "", err
+	}
+
+	return outputFilePath, err
+}
+```
+
+
+
+
 
 ### 依赖项
 
