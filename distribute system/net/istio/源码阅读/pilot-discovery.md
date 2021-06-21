@@ -1,12 +1,17 @@
 ```
-pushQueue <----equeue PushRequest----- `handleUpdates` <---pull PushRequest------ DiscoveryServer.pushChannel
-
-con.pushChannel <--------`dopush` <---dequue PushRequest ------ pushQueue
-
 configStoreCache.queue <--event--- kube controller <---watch/list-- kube crd
 
- configStoreCache.queue.run <--event-- configStoreCache.queue
+configStoreCache.queue.run <--event-- configStoreCache.queue
  	|----> configStoreCache.handler(event)---- rep ---> DiscoveryServer.pushChannel
+
+pushQueue <----equeue PushRequest----- `handleUpdates` <---pull PushRequest------ DiscoveryServer.pushChannel
+
+con.pushChannel <--------`doSendPushes` <---dequue PushRequest ------ pushQueue
+
+`pushConnection`<---StreamAggregatedResources <---discovery.DiscoveryRequest
+
+	
+
 ```
 
 

@@ -4,8 +4,9 @@
 序列化数据的基本单元在列式存储中称为"record batch"。从语义上讲，一个"record batch"是一组有序的数组集合，称为数组字段，每个数组的长度彼此相同，但数据类型可能不同。
 record batch 的字段名和类型组成了 batch的schema
 
-arrow的协议支持将record batch序列化为以二进制再提的流式数据，并且在不需要内存复制的情况下可以从流数据中进行反序列化出record batch
+arrow的协议支持将record batch序列化为以二进制载体的流式数据，并且在不需要内存复制的情况下可以从流数据中进行反序列化出record batch
 IPC协议利用了以下属性：
+
 * Schema
 * RcordBatch
 * DictionaryBatch
@@ -13,6 +14,7 @@ IPC协议利用了以下属性：
 ## 1. 数据封装
 为了进程间通信定义"封装"消息格式。在仅检查消息元数据，而不需要复制或移动任何实际数据，可以将消息反序列化位内存中的arrow数组对象
 封装格式如下：
+
 * 32位的连续指示符。 值0xFFFFFFFF表示一个有效信息
 * 32位小端长度的prefix表明元数据大小
 * 使用[Message.fbs](https://github.com/apache/arrow/blob/master/format/Message.fbs)中定义的类型的消息元数据
@@ -136,7 +138,7 @@ struct Buffer {
 ```
 
 ### 数据序列化和反序列化
-1. 首先会对schema进行深度优先便利扁平化扩展出field和buffuers
+1. 首先会对schema进行**深度优先**遍历扁平化扩展出field和buffuers
 ```
 col1: Struct<a: Int32, b: List<item: Int64>, c: Float64>
 col2: Utf8
