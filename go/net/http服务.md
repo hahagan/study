@@ -62,7 +62,7 @@ func (mux *ServeMux) Handle(pattern string, handler Handler) {
 }
 ```
 
-在上面的代码中可以发现`HandleFunc`函数同样是通过`Handle`完成uri的注册，不过会将对应的handler函数包装为`HandlerFunc`对象，这是由于`handleFunc`实现了`Handler`接口。这个接口会在服务器运行时处理连接请求时使用。因此通过`Handle`完成uri注册需要实现`Handler`接口
+在上面的代码中可以发现`ServeMux.HandleFunc`函数同样是通过`Handle`完成uri的注册，不过会将对应的`handler`函数包装为`HandlerFunc`对象，这是由于`handleFunc`实现了`Handler`接口。这个接口会在服务器运行时处理连接请求时使用。因此通过`Handle`完成uri注册需要实现`Handler`接口
 
 ```go
 // A Handler responds to an HTTP request.
