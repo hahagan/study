@@ -16,7 +16,7 @@ A series of blog posts explaining different components of TSDB:
 
 \* [Queries](https://ganeshvernekar.com/blog/prometheus-tsdb-queries/)
 
-
+t1 t2
 
 # 磁盘存储结构
 
@@ -156,7 +156,7 @@ data <bytes> │ CRC32 <4 byte> │
 * 每个series按16字节对齐，因此每个seriesID为`offset/16`
 * 每个chunk记录都记录了对应series在该chunk中的最早sample时间(`mint`)和最晚sample时间(`maxt`增量表示)，以及chunk的偏移量
 * 按label集的字典序排序
-* 时机上一条记录A {a=b,c=d}会被转变为{\__name__=A, a=b,c=d}
+* 实际上一条记录A {a=b,c=d}会被转变为{\__name__=A, a=b,c=d}
 
 ```
 ┌───────────────────────────────────────┐
