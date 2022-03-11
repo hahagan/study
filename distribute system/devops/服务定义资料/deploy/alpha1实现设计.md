@@ -168,9 +168,11 @@ OrdinaryDeployment类型componentDefinetion通过对OrdinaryDeployment workload�
 | `imagesName` | [`container`](###container)   | Y        |                | image Name in repository           |
 | `imagesTag`  | [`[]container`](###container) | y        |                | image tag                          |
 | `name`       | `string`                      | y        |                | container name                     |
-| `command`    | `string`                      | n        | /entrypoint.sh | container entrypoint command       |
-| `Args`       | `[]string`                    | n        |                | command's args                     |
-| `Health`     | [`[]health`](###health)       | y        |                | health check for container service |
+| `command`    | `[]string`                    | n        | /entrypoint.sh | container entrypoint command       |
+| `args`       | `[]string`                    | n        |                | command's args                     |
+| `health`     | [`[]health`](###health)       | y        |                | health check for container service |
+| `protocol`   | `[]protocol`                  | y        |                | the container service protocol     |
+| `env`        | `map[string]string`           | n        |                | developer default env              |
 
 ### health
 
@@ -179,6 +181,32 @@ OrdinaryDeployment类型componentDefinetion通过对OrdinaryDeployment workload�
 | `livenessProbe`  | [ref](https://kubernetes.io/docs/tasks/configure-pod-container/configure-liveness-readiness-startup-probes/) | Y        |               | live check.     |
 | `startupProbe`   | [ref](https://kubernetes.io/docs/tasks/configure-pod-container/configure-liveness-readiness-startup-probes/) | y        |               | startup check.  |
 | `readinessProbe` | [ref](https://kubernetes.io/docs/tasks/configure-pod-container/configure-liveness-readiness-startup-probes/) | y        |               | readiness check |
+
+### protocol
+
+| Attribute | Type           | Required | Default Value | Description             |
+| --------- | -------------- | -------- | ------------- | ----------------------- |
+| `type`    | `string`       | Y        |               | tco or http or somehing |
+| `spec`    | `protocolSpec` | y        |               | the protocol defiend    |
+
+###  protocolSpec
+
+#### tcp
+
+| Attribute | Type     | Required | Default Value | Description        |
+| --------- | -------- | -------- | ------------- | ------------------ |
+| `port`    | `int`    | y        |               | the tcp port       |
+| `name`    | `string` | y        |               | the port indentity |
+
+#### http
+
+| Attribute | Type       | Required | Default Value | Description      |
+| --------- | ---------- | -------- | ------------- | ---------------- |
+| `port`    | `int`      | y        |               | the http port    |
+| `path`    | `[]string` | y        |               | the route prefix |
+| `name`    | `string`   | y        |               | the indentity    |
+
+#### 
 
 ### 示例
 
