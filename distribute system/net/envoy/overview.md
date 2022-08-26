@@ -6,7 +6,7 @@
 
 ## 名词介绍
 
-![](https://www.servicemesher.com/istio-handbook/images/concepts-envoy-arch-simple.png)
+![](D:/study/distribute%20system/net/envoy/overview/images/concepts-envoy-arch-simple.png)
 
 1. 下游(Upstream): 数据请求的入口方向被称之为下游，在istio中又对应pod之外的客户端连接
 2. 上游(Downstream): 数据请求的出口方向则称之为上游，在istio中对应pod之内被流量拦截的服务
