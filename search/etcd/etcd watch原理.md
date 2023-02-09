@@ -31,7 +31,7 @@ GRPCServer -.1_Watch.-> _Watch_Watch_Handler
  EtcdServer -.NewWatchServer.-> watchServer
 _Watch_Watch_Handler -.2_Watch.-> watchServer
 
-watchServer -..- watchableStore
+watchServer -.?.- watchableStore
 watchServer --"4_(recvLoop) Watch" --> ServerWatchStream
 watchableStore -.3_NewWatchStream.-> ServerWatchStream
 
@@ -41,7 +41,7 @@ watchableStore --6_pushEvent--> ServerWatchStream.ch
 watchServer --"5_(sendLoop) pop WatchResponse"-->  ServerWatchStream.ch
 watchServer --"7_(sendLoop) Send WatchResponse"--> GrpcClient
 
- ServerWatchStream.ch ..- watchableStore.Watch
+ ServerWatchStream.ch -.?.- watchableStore.Watch
  
 
  
@@ -93,8 +93,8 @@ watchableStore.unsynced -.comsume by.->  syncWatchersLoop
 watchableStore.synced -.comsume by.-> notify(watchableStore.notify)
 notify -. send event to watcher .-> if0
 
-notify -..- watchableStoreTxnWrite.End
-watchableStoreTxnWrite.End -..- applierV3backend.Apply
+notify -.?.- watchableStoreTxnWrite.End
+watchableStoreTxnWrite.End -.?.- applierV3backend.Apply
 applierV3backend.Apply --- EtcdServer.base.Apply
 
 
